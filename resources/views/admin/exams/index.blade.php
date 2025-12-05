@@ -72,6 +72,9 @@
             <p class="text-uppercase small fw-bold mt-4 mb-2 ps-3" style="opacity: 0.5; font-size: 0.75rem;">Quản lý</p>
             <a href="{{ route('admin.users.index') }}" class="nav-link"><i class="fa-solid fa-users me-3"></i> Thành viên</a>
             <a href="{{ route('admin.exams.index') }}" class="nav-link active"><i class="fa-solid fa-file-circle-check me-3"></i> Ngân hàng đề</a>
+            <a href="{{ route('admin.forum.index') }}" class="nav-link {{ request()->routeIs('admin.forum.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-comments me-3"></i> Diễn đàn
+            </a>
         </nav>
     </div>
 

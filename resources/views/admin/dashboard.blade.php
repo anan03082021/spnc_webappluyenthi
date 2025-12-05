@@ -67,6 +67,9 @@
             <a href="{{ route('admin.exams.index') }}" class="nav-link">
                 <i class="fa-solid fa-file-circle-check"></i> Ngân hàng đề
             </a>
+            <a href="{{ route('admin.forum.index') }}" class="nav-link">
+                <i class="fa-solid fa-comments"></i> Diễn đàn
+            </a>
             
             <p class="text-uppercase small fw-bold mt-4 mb-2 ps-3" style="opacity: 0.5; font-size: 0.75rem;">Hệ thống</p>
             <a href="#" class="nav-link"><i class="fa-solid fa-gear"></i> Cài đặt</a>

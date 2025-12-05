@@ -148,6 +148,35 @@
             </div>
         </div>
 
+        @if($recommendedDocuments->isNotEmpty())
+    <div class="card border-0 shadow-sm rounded-4 mb-5" style="background: #f0f9ff; border-left: 5px solid #0ea5e9 !important;">
+        <div class="card-body p-4">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="fa-solid fa-book-open-reader text-primary me-2"></i>
+                Góc ôn tập dành cho bạn
+            </h5>
+            <p class="text-muted small">Dựa trên những câu bạn làm sai, hệ thống đề xuất các tài liệu sau để củng cố kiến thức:</p>
+            
+            <div class="row g-3">
+                @foreach($recommendedDocuments as $doc)
+                <div class="col-md-6">
+                    <div class="bg-white p-3 rounded-3 shadow-sm d-flex align-items-center">
+                        <div class="me-3 fs-3 text-danger"><i class="fa-regular fa-file-pdf"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark text-truncate">{{ $doc->title }}</div>
+                            <small class="text-muted">Chương: {{ $doc->category->name }}</small>
+                        </div>
+                        <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+                            Xem ngay
+                        </a>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
         <h5 class="fw-bold mb-3"><i class="fa-solid fa-list-check me-2"></i>Chi tiết lời giải</h5>
         
         @foreach($result->exam->questions as $index => $q)

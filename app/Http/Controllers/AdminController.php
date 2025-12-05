@@ -76,4 +76,45 @@ class AdminController extends Controller
         Exam::destroy($id);
         return back()->with('success', 'Đã xóa đề thi vĩnh viễn.');
     }
+
+    // --- QUẢN LÝ DIỄN ĐÀN ---
+
+    // 1. Danh sách bài viết (Chỉ lấy bài gốc, không lấy comment)
+    public function listForumPosts()
+    {
+        $posts = \App\Models\ForumPost::whereNull('parent_id')
+                    ->with(['user'])
+                    ->withCount('replies') // Đếm số bình luận
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(10);
+                    
+        return view('admin.forum.index', compact('posts'));
+    }
+
+    // 2. Xóa bài viết (Sẽ tự động xóa hết bình luận con nhờ onDelete cascade trong database)
+    public function deleteForumPost($id)
+    {
+        \App\Models\ForumPost::destroy($id);
+        return back()->with('success', 'Đã xóa bài viết và các thảo luận liên quan.');
+    }
+    // 3. Xem chi tiết bài viết và danh sách bình luận (Giao diện Admin)
+    public function showForumPost($id)
+    {
+        $post = \App\Models\ForumPost::with(['user', 'replies.user'])->findOrFail($id);
+        return view('admin.forum.show', compact('post'));
+    }
+
+    // 4. Xóa một bình luận cụ thể
+    public function deleteForumComment($id)
+    {
+        $comment = \App\Models\ForumPost::findOrFail($id);
+        
+        // Kiểm tra logic: Đảm bảo đây là comment (có parent_id) chứ không phải bài gốc
+        if($comment->parent_id) {
+            $comment->delete();
+            return back()->with('success', 'Đã xóa bình luận.');
+        }
+        
+        return back()->with('error', 'Không thể xóa bài gốc tại đây.');
+    }
 }

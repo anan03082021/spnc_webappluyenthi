@@ -87,6 +87,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/exams', [App\Http\Controllers\AdminController::class, 'listExams'])->name('exams.index');
     Route::post('/exams/{id}/toggle', [App\Http\Controllers\AdminController::class, 'toggleExamStatus'])->name('exams.toggle');
     Route::delete('/exams/{id}', [App\Http\Controllers\AdminController::class, 'deleteExam'])->name('exams.delete');
+
+    // QUẢN LÝ DIỄN ĐÀN
+    Route::get('/forum', [App\Http\Controllers\AdminController::class, 'listForumPosts'])->name('forum.index');
+    Route::delete('/forum/{id}', [App\Http\Controllers\AdminController::class, 'deleteForumPost'])->name('forum.delete');
+
+    // SỬA/THÊM ROUTE DIỄN ĐÀN:
+    Route::get('/forum', [App\Http\Controllers\AdminController::class, 'listForumPosts'])->name('forum.index');
+    Route::delete('/forum/post/{id}', [App\Http\Controllers\AdminController::class, 'deleteForumPost'])->name('forum.delete'); // Xóa bài gốc
+    
+    // MỚI: Xem chi tiết & Xóa comment
+    Route::get('/forum/{id}', [App\Http\Controllers\AdminController::class, 'showForumPost'])->name('forum.show');
+    Route::delete('/forum/comment/{id}', [App\Http\Controllers\AdminController::class, 'deleteForumComment'])->name('forum.delete_comment');
 });
 
 // Chuyển hướng sau khi đăng nhập (Logic tùy chỉnh)

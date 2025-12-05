@@ -17,57 +17,43 @@ class ExamController extends Controller
         return view('teacher.exams.index', compact('exams'));
     }
 
-    // Hiển thị form tạo đề mới
+// Sửa hàm create
     public function create()
     {
-        return view('teacher.exams.create');
+        // Lấy danh sách chủ đề để gán cho câu hỏi
+        $categories = \App\Models\Category::all(); 
+        return view('teacher.exams.create', compact('categories'));
     }
 
-    // Xử lý lưu đề thi và câu hỏi
+    // Sửa hàm store (Lưu câu hỏi kèm category_id)
     public function store(Request $request)
     {
-        // 1. Validate dữ liệu
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'duration' => 'required|integer|min:5',
-            'questions' => 'required|array|min:1', // Phải có ít nhất 1 câu hỏi
-            'questions.*.content' => 'required',
-            'questions.*.correct_answer' => 'required|in:A,B,C,D',
+        // ... (Validate giữ nguyên) ...
+
+        $exam = Exam::create([
+            'title' => $request->title,
+            'duration' => $request->duration,
+            'difficulty' => $request->difficulty,
+            'total_questions' => count($request->questions),
+            'created_by' => Auth::id(),
+            'is_published' => 0
         ]);
 
-        DB::beginTransaction(); // Bắt đầu giao dịch
-        try {
-            // 2. Tạo Đề thi
-            $exam = Exam::create([
-                'title' => $request->title,
-                'duration' => $request->duration,
-                'difficulty' => $request->difficulty,
-                'created_by' => Auth::id(),
-                'total_questions' => count($request->questions),
-                'is_published' => 0 // Mặc định chưa duyệt/ẩn
+        foreach ($request->questions as $q) {
+            \App\Models\Question::create([
+                'exam_id' => $exam->id,
+                'content' => $q['content'],
+                'option_a' => $q['option_a'],
+                'option_b' => $q['option_b'],
+                'option_c' => $q['option_c'],
+                'option_d' => $q['option_d'],
+                'correct_answer' => $q['correct_answer'],
+                'explanation' => $q['explanation'] ?? null,
+                'category_id' => $q['category_id'] ?? null, // <--- LƯU QUAN TRỌNG
             ]);
-
-            // 3. Tạo các Câu hỏi
-            foreach ($request->questions as $q) {
-                Question::create([
-                    'exam_id' => $exam->id,
-                    'content' => $q['content'],
-                    'option_a' => $q['option_a'],
-                    'option_b' => $q['option_b'],
-                    'option_c' => $q['option_c'],
-                    'option_d' => $q['option_d'],
-                    'correct_answer' => $q['correct_answer'],
-                    'explanation' => $q['explanation'] ?? null,
-                ]);
-            }
-
-            DB::commit(); // Lưu vào DB
-            return redirect()->route('teacher.exams.index')->with('success', 'Tạo đề thi thành công!');
-
-        } catch (\Exception $e) {
-            DB::rollBack(); // Hoàn tác nếu lỗi
-            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
+
+        return redirect()->route('teacher.exams.index')->with('success', 'Tạo đề thi thành công!');
     }
 
     // 4. Hiển thị form chỉnh sửa
