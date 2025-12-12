@@ -2,86 +2,76 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
-use App\Models\Category; // Giả sử đã có Model Category cho Chương/Bài
 use Illuminate\Http\Request;
+use App\Models\Document;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
-    // --- PHẦN DÀNH CHO GIÁO VIÊN ---
-
-    // 1. Form upload tài liệu
-    public function create()
+    // 1. Danh sách tài liệu
+    public function indexTeacher()
     {
-        // Lấy danh sách danh mục (Chương 1, Chương 2...) để chọn
-        $categories = Category::all(); 
-        return view('teacher.documents.create', compact('categories'));
+        $documents = Document::where('user_id', Auth::id())
+                             ->orderBy('created_at', 'desc')
+                             ->get(); // Lấy hết để hiển thị dạng Grid
+
+        // Tính tổng dung lượng đã dùng (Giả lập)
+        $totalUsage = $documents->sum(function($doc) {
+            return (float) $doc->file_size; // Cộng dồn MB
+        });
+
+        return view('teacher.documents.index', compact('documents', 'totalUsage'));
     }
 
-    // 2. Xử lý lưu file
+    // 2. Upload file mới
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx|max:10240', // Max 10MB
-            'category_id' => 'nullable|exists:categories,id',
+            'file' => 'required|file|max:10240', // Max 10MB
         ]);
 
-        // Xử lý upload file vào thư mục 'public/documents'
-        if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('documents', 'public');
+        $file = $request->file('file');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $extension = $file->getClientOriginalExtension();
+        
+        // Tính dung lượng ra MB (Làm tròn 2 số lẻ)
+        $size = round($file->getSize() / 1024 / 1024, 2); 
+        if ($size == 0) $size = 0.01; // Tối thiểu
 
-            Document::create([
-                'title' => $request->title,
-                'file_path' => $filePath,
-                'category_id' => $request->category_id,
-                'uploaded_by' => Auth::id(),
-            ]);
+        // Lưu vào folder 'documents' trong storage/app/public
+        $path = $file->storeAs('documents', $filename, 'public');
 
-            return redirect()->route('teacher.documents.index')->with('success', 'Upload tài liệu thành công!');
-        }
+        Document::create([
+            'user_id' => Auth::id(),
+            'title' => $request->title,
+            'file_path' => $path,
+            'file_type' => strtolower($extension),
+            'file_size' => $size,
+        ]);
 
-        return back()->with('error', 'Vui lòng chọn file.');
+        return back()->with('success', 'Tải tài liệu lên thành công!');
     }
 
-    // 3. Danh sách tài liệu (Quản lý)
-    public function indexTeacher()
+    // 3. Tải xuống
+    public function download($id)
     {
-        $documents = Document::where('uploaded_by', Auth::id())->latest()->get();
-        return view('teacher.documents.index', compact('documents'));
+        $document = Document::findOrFail($id);
+        return Storage::disk('public')->download($document->file_path, $document->title . '.' . $document->file_type);
     }
 
     // 4. Xóa tài liệu
     public function destroy($id)
     {
-        $document = Document::findOrFail($id);
+        $document = Document::where('user_id', Auth::id())->findOrFail($id);
         
-        // Xóa file vật lý trong storage
+        // Xóa file vật lý
         if (Storage::disk('public')->exists($document->file_path)) {
             Storage::disk('public')->delete($document->file_path);
         }
-        
+
         $document->delete();
         return back()->with('success', 'Đã xóa tài liệu.');
-    }
-
-    // --- PHẦN DÀNH CHO HỌC SINH ---
-
-    // 5. Xem danh sách tài liệu
-    public function indexStudent(Request $request)
-    {
-        // Có thể lọc theo category_id nếu muốn
-        $query = Document::with('category')->latest();
-        
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        $documents = $query->get();
-        $categories = Category::all(); // Để làm bộ lọc
-
-        return view('student.documents.index', compact('documents', 'categories'));
     }
 }

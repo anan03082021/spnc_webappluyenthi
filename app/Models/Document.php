@@ -9,23 +9,28 @@ class Document extends Model
 {
     use HasFactory;
 
-    // QUAN TRỌNG: Phải khai báo các cột được phép thêm dữ liệu
-    protected $fillable = [
-        'title', 
-        'file_path', 
-        'category_id', 
-        'uploaded_by'
-    ];
+    protected $fillable = ['user_id', 'title', 'file_path', 'file_type', 'file_size'];
 
-    // Quan hệ với bảng Categories
-    public function category()
+    public function user()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(User::class);
     }
-
-    // Quan hệ với User (người upload)
-    public function uploader()
+    
+    // Hàm tiện ích để lấy Icon dựa trên đuôi file
+    public function getIconAttribute()
     {
-        return $this->belongsTo(User::class, 'uploaded_by');
+        $icons = [
+            'pdf' => 'fa-file-pdf text-danger',
+            'doc' => 'fa-file-word text-primary',
+            'docx' => 'fa-file-word text-primary',
+            'xls' => 'fa-file-excel text-success',
+            'xlsx' => 'fa-file-excel text-success',
+            'ppt' => 'fa-file-powerpoint text-warning',
+            'pptx' => 'fa-file-powerpoint text-warning',
+            'zip' => 'fa-file-zipper text-secondary',
+            'rar' => 'fa-file-zipper text-secondary',
+        ];
+
+        return $icons[$this->file_type] ?? 'fa-file text-secondary';
     }
 }

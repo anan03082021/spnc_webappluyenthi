@@ -11,14 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Kiểm tra nếu bảng đã tồn tại thì xóa đi tạo lại để cập nhật cấu trúc mới
+        Schema::dropIfExists('documents');
+
         Schema::create('documents', function (Blueprint $table) {
-        $table->id();
-        $table->string('title');
-        $table->string('file_path'); // Đường dẫn file upload
-        $table->foreignId('category_id')->nullable()->constrained('categories'); // Phân loại theo chương
-        $table->foreignId('uploaded_by')->constrained('users');
-        $table->timestamps();
-    });
+            $table->id();
+            
+            // 1. Người đăng (Giáo viên)
+            // Đổi từ 'uploaded_by' thành 'user_id' để Eloquent tự hiểu quan hệ
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
+            
+            $table->string('title');     // Tên hiển thị (VD: Đề cương Toán)
+            $table->string('file_path'); // Đường dẫn file (documents/filename.pdf)
+            
+            // 2. Các cột MỚI cần thêm để phục vụ giao diện
+            $table->string('file_type')->nullable(); // Lưu đuôi file (pdf, docx...) để hiện Icon
+            $table->decimal('file_size', 8, 2)->nullable(); // Lưu dung lượng (MB) để tính toán
+            
+            // Tạm thời bỏ category_id nếu chưa dùng đến để tránh lỗi khóa ngoại
+            // $table->foreignId('category_id')->nullable()->constrained('categories'); 
+
+            $table->timestamps();
+        });
     }
 
     /**

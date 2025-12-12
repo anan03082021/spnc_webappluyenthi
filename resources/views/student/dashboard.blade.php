@@ -1,319 +1,334 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Học Sinh - SPNC Edutech</title>
+@extends('layouts.student')
+
+@section('title', 'Trung tâm điều khiển')
+
+@push('styles')
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #f3f4f6; /* Xám nhạt dịu mắt */
-            color: #4a5568;
+        /* --- DASHBOARD PROFESSIONAL STYLES --- */
+        body { background-color: #f8fafc; }
+
+        /* 1. WELCOME BANNER (Glassmorphism + Gradient) */
+        .welcome-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #3b82f6 100%);
+            border-radius: 24px; padding: 40px; color: white; margin-bottom: 40px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px -10px rgba(5, 150, 105, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        /* Decorative Circles */
+        .welcome-card::before, .welcome-card::after {
+            content: ''; position: absolute; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        }
+        .welcome-card::before { width: 300px; height: 300px; top: -100px; right: -50px; }
+        .welcome-card::after { width: 200px; height: 200px; bottom: -50px; left: 50px; opacity: 0.5; }
+
+        .btn-banner {
+            background: rgba(255,255,255,0.9); color: var(--primary-color); font-weight: 800;
+            border: none; padding: 12px 25px; border-radius: 50px; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .btn-banner:hover { transform: translateY(-3px); background: white; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+        /* 2. SECTION HEADERS */
+        .section-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;
+        }
+        .section-title {
+            font-size: 1.25rem; font-weight: 800; color: #1e293b; margin: 0;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i { color: var(--primary-color); }
+        .link-more {
+            font-size: 0.9rem; font-weight: 700; color: #64748b; text-decoration: none; transition: 0.2s;
+        }
+        .link-more:hover { color: var(--secondary-color); }
+
+        /* 3. EXAM CARD PRO (Consistent with Explore Page) */
+        .exam-card-wrapper { position: relative; height: 100%; transition: 0.3s; }
+        .exam-card-wrapper:hover { transform: translateY(-5px); }
+
+        .exam-card-pro {
+            background: white; border-radius: 20px; overflow: hidden; border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 10px -2px rgba(0,0,0,0.03); height: 100%; display: block; text-decoration: none; color: inherit;
+        }
+        .card-cover {
+            height: 120px; position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        /* Dynamic Gradients */
+        .grad-1 { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); } /* Green */
+        .grad-2 { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); } /* Blue */
+        .grad-3 { background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%); } /* Orange */
+        .grad-4 { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); } /* Purple */
+
+        .card-icon { font-size: 3rem; color: white; opacity: 0.6; mix-blend-mode: overlay; transition: 0.5s; }
+        .exam-card-wrapper:hover .card-icon { transform: scale(1.1) rotate(-10deg); opacity: 0.9; }
+
+        .badge-diff {
+            position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9);
+            padding: 4px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: #334155;
         }
 
-        /* Navbar Style */
-        .navbar {
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            padding: 12px 0;
+        .card-body { padding: 20px; }
+        .exam-title { font-weight: 800; font-size: 1rem; color: #1e293b; margin-bottom: 10px; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .exam-meta { font-size: 0.8rem; color: #64748b; font-weight: 600; display: flex; gap: 15px; margin-bottom: 15px; }
+        .btn-action {
+            width: 100%; padding: 10px; border-radius: 12px; font-weight: 700; border: none; font-size: 0.9rem;
+            background: #f8fafc; color: #64748b; transition: 0.3s;
         }
-        .navbar-brand {
-            font-weight: 800;
-            color: #1a202c;
+        .exam-card-wrapper:hover .btn-action { background: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3); }
+
+        /* Bookmark Button */
+        .btn-bookmark {
+            position: absolute; top: 10px; left: 10px; z-index: 10;
+            width: 32px; height: 32px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,0.9); box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer;
         }
+        .btn-bookmark:hover { transform: scale(1.1); background: white; }
+        .bm-active { color: #f59e0b; } .bm-inactive { color: #cbd5e0; }
+
+        /* 4. SIDEBAR WIDGETS */
+        .widget-box {
+            background: white; border-radius: 20px; padding: 20px; margin-bottom: 30px;
+            box-shadow: 0 4px 10px -2px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
+        }
+        .widget-title { font-weight: 800; font-size: 1rem; color: #334155; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* Card Style Custom */
-        .dashboard-card {
-            background: white;
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-            overflow: hidden;
+        /* List Item Style */
+        .list-item {
+            display: flex; align-items: center; padding: 12px; border-radius: 12px;
+            transition: 0.2s; text-decoration: none; color: inherit; border: 1px solid transparent; margin-bottom: 8px;
         }
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        .list-item:hover { background: #f0fdf4; border-color: var(--primary-color); }
+        .list-icon {
+            width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin-right: 15px; flex-shrink: 0;
         }
-
-        /* Chart Section */
-        .chart-container {
-            position: relative;
-            padding: 20px;
-        }
-
-        /* Exam Card Details */
-        .exam-meta {
-            font-size: 0.9rem;
-            color: #718096;
-            margin-bottom: 8px;
-        }
-        .badge-difficulty {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .badge-easy { background-color: #def7ec; color: #03543f; }
-        .badge-medium { background-color: #feecdc; color: #9c4221; }
-        .badge-hard { background-color: #fde8e8; color: #9b1c1c; }
-
-        /* Buttons */
-        .btn-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 12px;
-            width: 100%;
-            transition: opacity 0.3s;
-        }
-        .btn-gradient:hover {
-            opacity: 0.9;
-            color: white;
-        }
-
-        /* Welcome Banner */
-        .welcome-banner {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-        }
-        .welcome-pattern {
-            position: absolute;
-            right: 0;
-            top: 0;
-            opacity: 0.1;
-            font-size: 150px;
-            transform: translate(20%, -20%);
-        }
+        .icon-forum { background: #f3e8ff; color: #9333ea; }
+        .icon-doc { background: #e0f2fe; color: #0284c7; }
     </style>
-</head>
-<body>
+@endpush
 
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <i class="fa-solid fa-graduation-cap text-primary fs-3 me-2"></i>
-                <span>SPNC<span class="text-primary">Edu</span></span>
-            </a>
-
-            <div class="ms-auto d-flex align-items-center gap-3">
-                <a href="{{ route('student.documents.index') }}" class="btn btn-light rounded-pill fw-bold text-primary border shadow-sm">
-                    <i class="fa-solid fa-folder-open me-1"></i> Kho tài liệu
-                </a>
-                <a href="{{ route('forum.index') }}" class="btn btn-light rounded-pill fw-bold text-success border shadow-sm">
-                    <i class="fa-solid fa-comments me-1"></i> Hỏi đáp
-                </a>
-
-                <div class="dropdown">
-                    <button class="btn btn-white d-flex align-items-center p-1 rounded-pill border shadow-sm" type="button" data-bs-toggle="dropdown">
-                        @if(Auth::user()->avatar)
-                            <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="rounded-circle" style="width: 38px; height: 38px; object-fit: cover;">
-                        @else
-                            <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center" style="width: 38px; height: 38px; font-weight: bold;">
-                                {{ substr(Auth::user()->name, 0, 1) }}
-                            </div>
-                        @endif
-                        <span class="fw-bold mx-2 d-none d-md-block">{{ Auth::user()->name }}</span>
-                        <i class="fa-solid fa-chevron-down small text-muted me-2"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2">
-                        <li><a class="dropdown-item py-2" href="{{ route('profile.edit') }}"><i class="fa-regular fa-user me-2"></i>Hồ sơ cá nhân</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="dropdown-item py-2 text-danger"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container py-4">
-        
-        <div class="welcome-banner shadow">
-            <i class="fa-solid fa-award welcome-pattern"></i>
-            <h2 class="fw-bold">Xin chào, {{ Auth::user()->name }}! 👋</h2>
-            <p class="mb-0 opacity-75">Hôm nay bạn muốn chinh phục kiến thức nào?</p>
-        </div>
-
-        <div class="row mb-5">
-            <div class="col-md-4 mb-4 mb-md-0">
-                <div class="dashboard-card h-100">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-4"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Tiến độ học tập</h5>
-                        <div class="chart-container" style="height: 250px; display: flex; justify-content: center;">
-                            <canvas id="progressChart"></canvas>
-                        </div>
-                        <div class="text-center mt-3">
-                            <span class="badge bg-light text-dark border">Đã làm: {{ $attemptedExamsCount }}</span>
-                            <span class="badge bg-light text-dark border">Chưa làm: {{ $notAttemptedCount }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+@section('content')
+    
+    <div class="welcome-card" data-aos="fade-down" data-aos-duration="800">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
             <div class="col-md-8">
-                <div class="dashboard-card h-100">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-4"><i class="fa-solid fa-chart-line text-success me-2"></i>Lịch sử phong độ</h5>
-                        <div class="chart-container" style="height: 250px;">
-                            <canvas id="scoreChart"></canvas>
-                        </div>
+                <h2 class="fw-bold mb-2">Xin chào, {{ Auth::user()->name }}! 👋</h2>
+                <p class="mb-4 opacity-90">Hôm nay là một ngày tuyệt vời để bứt phá giới hạn bản thân.</p>
+                <div class="d-flex gap-3">
+                    <div class="badge bg-white bg-opacity-25 px-3 py-2 rounded-pill fw-normal">
+                        <i class="fa-solid fa-check-circle me-1"></i> Đã làm: <strong>{{ $attemptedExamsCount }}</strong>
+                    </div>
+                    <div class="badge bg-white bg-opacity-25 px-3 py-2 rounded-pill fw-normal">
+                        <i class="fa-solid fa-clock me-1"></i> Chờ làm: <strong>{{ $notAttemptedCount }}</strong>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="d-flex align-items-center mb-4">
-            <h3 class="fw-bold m-0"><i class="fa-solid fa-list-check text-warning me-2"></i>Đề thi mới nhất</h3>
-            <span class="badge bg-primary ms-3 rounded-pill">{{ count($exams) }} đề có sẵn</span>
-        </div>
-
-        <div class="row g-4">
-            @forelse($exams as $exam)
-            <div class="col-md-6 col-lg-4">
-                <div class="dashboard-card d-flex flex-column">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="icon-box bg-light text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fa-regular fa-file-code fs-4"></i>
-                            </div>
-                            @php
-                                $badgeClass = match($exam->difficulty) {
-                                    'easy' => 'badge-easy',
-                                    'medium' => 'badge-medium',
-                                    'hard' => 'badge-hard',
-                                    default => 'badge-medium'
-                                };
-                                $diffLabel = match($exam->difficulty) {
-                                    'easy' => 'Cơ bản',
-                                    'medium' => 'Vận dụng',
-                                    'hard' => 'Nâng cao',
-                                    default => 'Trung bình'
-                                };
-                            @endphp
-                            <span class="badge-difficulty {{ $badgeClass }}">{{ $diffLabel }}</span>
-                        </div>
-                        
-                        <h5 class="card-title fw-bold mb-3 text-truncate" title="{{ $exam->title }}">{{ $exam->title }}</h5>
-                        
-                        <div class="exam-meta">
-                            <i class="fa-regular fa-clock me-2"></i>Thời gian: <strong>{{ $exam->duration }} phút</strong>
-                        </div>
-                        <div class="exam-meta">
-                            <i class="fa-solid fa-list-ol me-2"></i>Số câu hỏi: <strong>{{ $exam->total_questions }} câu</strong>
-                        </div>
-                    </div>
-                    
-                    <div class="card-footer bg-white border-0 p-4 pt-0 mt-auto">
-                        <a href="{{ route('student.exams.show', $exam->id) }}" class="btn btn-gradient shadow-sm">
-                            Bắt đầu làm bài <i class="fa-solid fa-arrow-right ms-2"></i>
-                        </a>
-                    </div>
-                </div>
+            <div class="col-md-4 text-md-end mt-4 mt-md-0">
+                <button class="btn-banner" data-bs-toggle="modal" data-bs-target="#progressModal">
+                    <i class="fa-solid fa-chart-pie me-2"></i> Xem tiến độ
+                </button>
             </div>
-            @empty
-            <div class="col-12">
-                <div class="text-center py-5 bg-white rounded-4 shadow-sm">
-                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-state-2130362-1800926.png" alt="Empty" style="width: 200px; opacity: 0.8">
-                    <h5 class="mt-3 text-muted">Chưa có đề thi nào được công bố.</h5>
-                </div>
-            </div>
-            @endforelse
-        </div>
-        
-        <div class="text-center mt-5 mb-5 text-muted small">
-            &copy; 2025 SPNC Edutech. Chúc bạn ôn tập tốt!
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="row">
+        <div class="col-lg-8">
+            
+            <div class="section-header" data-aos="fade-right">
+                <h3 class="section-title"><i class="fa-solid fa-graduation-cap"></i> Đề thi đề xuất</h3>
+                <a href="{{ route('student.exams.explore') }}" class="link-more">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+
+            <div class="row g-4 mb-5">
+                @forelse($exams as $index => $exam)
+                    @php
+                        $gradClass = 'grad-' . (($index % 4) + 1);
+                        $iconClass = match($index % 4) { 0 => 'fa-code', 1 => 'fa-database', 2 => 'fa-network-wired', default => 'fa-file-signature' };
+                        // Safe check for bookmarks
+                        $isSaved = Auth::user()->bookmarks ? Auth::user()->bookmarks->contains($exam->id) : false;
+                    @endphp
+
+                    <div class="col-md-6 col-xl-4" data-aos="fade-up" data-aos-delay="{{ $index * 100 }}">
+                        <div class="exam-card-wrapper">
+                            <form action="{{ route('student.exams.bookmark', $exam->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn-bookmark {{ $isSaved ? 'bm-active' : 'bm-inactive' }}" title="{{ $isSaved ? 'Bỏ lưu' : 'Lưu đề này' }}">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                </button>
+                            </form>
+
+                            <a href="{{ route('student.exams.show', $exam->id) }}" class="exam-card-pro">
+                                <div class="card-cover {{ $gradClass }}">
+                                    <i class="fa-solid {{ $iconClass }} card-icon"></i>
+                                    <span class="badge-diff">{{ $exam->difficulty }}</span>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="exam-title" title="{{ $exam->title }}">{{ $exam->title }}</h6>
+                                    <div class="exam-meta">
+                                        <span><i class="fa-regular fa-clock me-1"></i> {{ $exam->duration }}'</span>
+                                        <span><i class="fa-solid fa-list-ol me-1"></i> {{ $exam->total_questions }} câu</span>
+                                    </div>
+                                    <button class="btn-action">Làm bài ngay</button>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-12 text-center text-muted py-5 border rounded-4 border-dashed">
+                        <i class="fa-regular fa-folder-open fs-1 mb-3 opacity-25"></i>
+                        <p>Chưa có đề thi nào khả dụng.</p>
+                    </div>
+                @endforelse
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+            
+            <div class="widget-box" data-aos="fade-left" data-aos-delay="200">
+                <div class="widget-title">
+                    <span><i class="fa-solid fa-fire text-danger me-2"></i> Thảo luận HOT</span>
+                    <a href="{{ route('forum.index') }}" class="small text-muted text-decoration-none">Xem thêm</a>
+                </div>
+                
+                @forelse($trendingPosts as $post)
+                <a href="{{ route('forum.show', $post->id) }}" class="list-item">
+                    <div class="list-icon icon-forum">
+                        <i class="fa-regular fa-comments"></i>
+                    </div>
+                    <div style="overflow: hidden;">
+                        <div class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;">{{ $post->title }}</div>
+                        <div class="small text-muted">
+                            <span class="fw-bold text-primary">{{ $post->replies_count }}</span> trả lời • {{ $post->created_at->diffForHumans(null, true) }}
+                        </div>
+                    </div>
+                </a>
+                @empty
+                <div class="text-center small text-muted py-3">Chưa có thảo luận nổi bật.</div>
+                @endforelse
+            </div>
+
+            <div class="widget-box" data-aos="fade-left" data-aos-delay="400">
+                <div class="widget-title">
+                    <span><i class="fa-solid fa-book-open text-primary me-2"></i> Tài liệu mới</span>
+                    <a href="{{ route('student.documents.index') }}" class="small text-muted text-decoration-none">Thư viện</a>
+                </div>
+
+                @forelse($latestDocuments as $doc)
+                <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="list-item">
+                    <div class="list-icon icon-doc">
+                        @if(str_contains($doc->file_path, '.pdf')) 
+                            <i class="fa-regular fa-file-pdf text-danger"></i> 
+                        @else 
+                            <i class="fa-regular fa-file-word text-primary"></i> 
+                        @endif
+                    </div>
+                    <div style="overflow: hidden;">
+                        <div class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;">{{ $doc->title }}</div>
+                        <div class="small text-muted">{{ $doc->category->name ?? 'Tài liệu chung' }}</div>
+                    </div>
+                </a>
+                @empty
+                <div class="text-center small text-muted py-3">Chưa có tài liệu mới.</div>
+                @endforelse
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="progressModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Tổng quan tiến độ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-5 text-center border-end">
+                            <h6 class="text-muted fw-bold mb-3 small text-uppercase">Tỷ lệ hoàn thành</h6>
+                            <div style="height: 200px; display: flex; justify-content: center;">
+                                <canvas id="progressChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-7 ps-md-4">
+                            <h6 class="text-muted fw-bold mb-3 small text-uppercase">Biểu đồ điểm số</h6>
+                            <div style="height: 200px;">
+                                <canvas id="scoreChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <a href="{{ route('student.exams.history') }}" class="btn btn-success w-100 rounded-pill fw-bold" style="background: var(--primary-color); border:none;">Vào trang thành tựu</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endsection
+
+@push('scripts')
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    
     <script>
-        // Config Chart.js (Giữ nguyên logic cũ nhưng style đẹp hơn)
-        Chart.defaults.font.family = "'Nunito', sans-serif";
-        Chart.defaults.color = '#718096';
+        // Init Animation
+        AOS.init({ duration: 800, once: true });
 
-        // 1. Biểu đồ tròn
-        const ctxProgress = document.getElementById('progressChart').getContext('2d');
-        new Chart(ctxProgress, {
+        // Safe Data Injection
+        const doneCount = {{ $attemptedExamsCount ?? 0 }};
+        const pendingCount = {{ $notAttemptedCount ?? 0 }};
+        const chartLabels = {!! json_encode($chartLabels ?? []) !!};
+        const chartScores = {!! json_encode($chartScores ?? []) !!};
+
+        // 1. Doughnut Chart (Avocado Theme)
+        new Chart(document.getElementById('progressChart').getContext('2d'), {
             type: 'doughnut',
-            data: {
-                labels: ['Đã làm', 'Chưa làm'],
-                datasets: [{
-                    data: [{{ $attemptedExamsCount }}, {{ $notAttemptedCount }}],
-                    backgroundColor: ['#48bb78', '#edf2f7'], // Màu xanh lá và xám nhạt
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
+            data: { 
+                labels: ['Đã làm', 'Chưa làm'], 
+                datasets: [{ 
+                    data: [doneCount, pendingCount], 
+                    backgroundColor: ['#10b981', '#f1f5f9'], // Emerald vs Light Gray
+                    borderWidth: 0 
+                }] 
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%', // Làm mỏng vòng tròn
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
-                }
-            }
+            options: { responsive: true, cutout: '75%', plugins: { legend: { display: false } } }
         });
 
-        // 2. Biểu đồ đường
+        // 2. Line Chart (Avocado Gradient)
         const ctxScore = document.getElementById('scoreChart').getContext('2d');
+        let gradient = ctxScore.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // Green low opacity
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
         new Chart(ctxScore, {
             type: 'line',
             data: {
-                labels: {!! $chartLabels !!},
+                labels: chartLabels,
                 datasets: [{
-                    label: 'Điểm số',
-                    data: {{ $chartScores }},
-                    borderColor: '#667eea', // Màu tím chủ đạo
-                    backgroundColor: 'rgba(102, 126, 234, 0.05)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4, // Đường cong mềm
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#667eea',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
+                    label: 'Điểm', data: chartScores, 
+                    borderColor: '#10b981', // Emerald Color
+                    backgroundColor: gradient, 
+                    fill: true, tension: 0.4, pointRadius: 5,
+                    pointBackgroundColor: '#fff', pointBorderColor: '#10b981'
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 10,
-                        grid: { borderDash: [5, 5], color: '#e2e8f0' }
-                    },
-                    x: {
-                        grid: { display: false }
-                    }
-                }
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { beginAtZero: true, max: 10, grid: { borderDash: [5, 5] } }, 
+                    x: { display: false } 
+                } 
             }
         });
     </script>
-</body>
-</html>
+@endpush

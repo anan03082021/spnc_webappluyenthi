@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Exam;
 use App\Models\Result;
 use App\Models\Document; // Đã thêm Model Document
+use App\Models\ForumPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,32 +16,36 @@ class StudentExamController extends Controller
     {
         $userId = Auth::id();
 
-        // 1. Lấy danh sách đề thi để hiển thị
-        $exams = Exam::where('is_published', 1)->orderBy('created_at', 'desc')->get();
+        // 1. Lấy Đề thi (Đề thi thử)
+        $exams = Exam::where('is_published', 1)->orderBy('created_at', 'desc')->take(8)->get();
 
-        // 2. Thống kê cho Biểu đồ Tròn (Tiến độ)
-        $totalExams = $exams->count();
+        // 2. Lấy Diễn đàn nổi bật (Sắp xếp theo số lượng trả lời giảm dần)
+        $trendingPosts = ForumPost::with('user')
+            ->withCount('replies')
+            ->orderBy('replies_count', 'desc') // Bài nào nhiều comment nhất lên đầu
+            ->take(4) // Lấy 4 bài
+            ->get();
+
+        // 3. Lấy Tài liệu mới nhất
+        $latestDocuments = Document::with('category')->latest()->take(4)->get();
+
+        // 4. Số liệu cho "Tiến độ học tập" (Để hiển thị trong Modal)
+        $totalExams = Exam::where('is_published', 1)->count();
         $attemptedExamsCount = Result::where('user_id', $userId)->distinct('exam_id')->count('exam_id');
-        $notAttemptedCount = max(0, $totalExams - $attemptedExamsCount); // Dùng max(0) cho gọn
+        $notAttemptedCount = max(0, $totalExams - $attemptedExamsCount);
 
-        // 3. Thống kê cho Biểu đồ Đường (Biến động điểm số - 10 bài gần nhất)
-        $recentResults = Result::where('user_id', $userId)
-                                ->with('exam')
-                                ->orderBy('created_at', 'asc')
-                                ->take(10)
-                                ->get();
-
-        // Chuẩn bị dữ liệu Chart.js
-        $chartLabels = $recentResults->map(function ($result) {
-            return $result->exam->title . ' (' . $result->created_at->format('d/m') . ')';
-        });
+        // Dữ liệu biểu đồ
+        $recentResults = Result::where('user_id', $userId)->with('exam')->orderBy('created_at', 'asc')->take(10)->get();
+        $chartLabels = $recentResults->map(fn($r) => $r->exam->title);
         $chartScores = $recentResults->pluck('score');
 
         return view('student.dashboard', compact(
-            'exams', 
-            'attemptedExamsCount', 
-            'notAttemptedCount', 
-            'chartLabels', 
+            'exams',
+            'trendingPosts',
+            'latestDocuments',
+            'attemptedExamsCount',
+            'notAttemptedCount',
+            'chartLabels',
             'chartScores'
         ));
     }
@@ -115,13 +120,122 @@ class StudentExamController extends Controller
     }
 
     // 5. [BỔ SUNG] Lịch sử làm bài
-    public function history()
-    {
-        $results = Result::where('user_id', Auth::id())
-                    ->with('exam') // Lấy kèm thông tin đề thi
-                    ->orderBy('created_at', 'desc')
-                    ->paginate(10);
+// Trang Thư viện cá nhân (Thay thế hàm history cũ)
+public function history()
+{
+    $userId = Auth::id();
+    
+    // 1. Dữ liệu gốc
+    $results = Result::where('user_id', $userId)->get();
 
-        return view('student.exams.history', compact('results'));
+    // 2. Tính toán Thống kê (Tổng quan)
+    $totalAttempts = $results->count(); // Tổng số lượt làm bài (bao gồm làm lại)
+    $uniqueExamsCount = $results->unique('exam_id')->count(); // Số đề thi khác nhau đã làm
+    $avgScore = $results->avg('score'); // Điểm trung bình
+    $highestScore = $results->max('score'); // Điểm cao nhất
+
+    // 3. Truy cập gần đây (Lấy 5 bài làm gần nhất)
+    $recentAccess = Result::with('exam')
+                    ->where('user_id', $userId)
+                    ->orderBy('created_at', 'desc')
+                    ->take(5)
+                    ->get();
+
+    // 4. Đề thi đã lưu
+    $favorites = Auth::user()->bookmarks ?? collect([]);
+
+    // Dữ liệu cho biểu đồ (nếu cần dùng lại)
+    $monthlyStats = Result::where('user_id', $userId)
+        ->selectRaw('MONTH(created_at) as month, AVG(score) as avg_score')
+        ->where('created_at', '>=', now()->subMonths(6))
+        ->groupBy('month')->orderBy('month')->get();
+    
+    $months = $monthlyStats->map(fn($item) => "Tháng " . $item->month);
+    $scores = $monthlyStats->pluck('avg_score');
+
+    return view('student.exams.library', compact(
+        'totalAttempts', 
+        'uniqueExamsCount', // Biến mới
+        'avgScore', 
+        'highestScore',
+        'recentAccess',
+        'favorites',
+        'months', 'scores'
+    ));
+}
+    // 6. [MỚI] Trang Khám phá toàn bộ đề thi
+    public function explore(Request $request)
+    {
+        // Lấy danh sách chủ đề để làm bộ lọc
+        $categories = \App\Models\Category::all();
+
+        // Khởi tạo query lấy đề đã duyệt
+        $query = Exam::where('is_published', 1);
+
+        // Xử lý Tìm kiếm (nếu có nhập từ khóa)
+        if ($request->has('search') && $request->search != '') {
+            $keyword = $request->search;
+            $query->where('title', 'like', "%{$keyword}%");
+        }
+
+        // Sắp xếp mới nhất
+        $exams = $query->orderBy('created_at', 'desc')->paginate(12); // 12 đề mỗi trang
+
+        return view('student.exams.explore', compact('exams', 'categories'));
+    }
+
+    // Hàm xử lý Lưu / Bỏ lưu đề thi
+    public function toggleBookmark($id)
+    {
+        $user = Auth::user();
+        // Phương thức toggle: Nếu có rồi thì xóa, chưa có thì thêm
+        $user->bookmarks()->toggle($id);
+        
+        return back()->with('success', 'Đã cập nhật kho đề thi đã lưu.');
+    }
+
+    // Trang Tiến độ học tập chi tiết
+    public function progress()
+    {
+        $userId = Auth::id();
+
+        // 1. Dữ liệu cho Biểu đồ Tròn (Hoàn thành vs Tổng)
+        $totalExamsInSystem = Exam::where('is_published', 1)->count();
+        $completedExams = Result::where('user_id', $userId)->distinct('exam_id')->count('exam_id');
+        $remainingExams = max(0, $totalExamsInSystem - $completedExams);
+
+        // 2. Dữ liệu cho Biểu đồ Miền (Biến động điểm số theo thời gian)
+        // Lấy 10 bài làm gần nhất để biểu đồ không bị quá dài
+        $scoreHistory = Result::where('user_id', $userId)
+                        ->orderBy('created_at', 'asc') // Sắp xếp cũ -> mới để vẽ biểu đồ
+                        ->take(20) 
+                        ->get();
+        
+        $chartDates = $scoreHistory->map(fn($r) => $r->created_at->format('d/m'));
+        $chartScores = $scoreHistory->pluck('score');
+
+        // 3. Dữ liệu cho Biểu đồ Radar (Gợi ý kỹ năng - Giả lập dữ liệu)
+        // *Lưu ý: Sau này bạn cần tính trung bình điểm theo category_id của câu hỏi
+        // Hiện tại tôi sẽ random nhẹ để demo giao diện cho bạn hình dung
+        $skillStats = [
+            'Lý thuyết' => rand(50, 90),
+            'Thực hành' => rand(40, 80),
+            'Tư duy' => rand(60, 95),
+            'Tốc độ' => rand(30, 80),
+            'Chính xác' => rand(70, 100),
+        ];
+
+        // 4. Danh sách chi tiết (Phân trang)
+        $historyDetails = Result::where('user_id', $userId)
+                        ->with('exam')
+                        ->orderBy('created_at', 'desc')
+                        ->paginate(10);
+
+        return view('student.progress.index', compact(
+            'completedExams', 'remainingExams',
+            'chartDates', 'chartScores',
+            'skillStats',
+            'historyDetails'
+        ));
     }
 }

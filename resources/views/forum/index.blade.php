@@ -1,132 +1,203 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Diễn đàn thảo luận - SPNC Edutech</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+@extends(Auth::user()->role == 'teacher' ? 'layouts.teacher' : 'layouts.student')
 
+@section('title', $isInternal ? 'Góc Chuyên Môn' : 'Cộng đồng Luyện thi')
+
+@push('styles')
     <style>
-        body { font-family: 'Nunito', sans-serif; background-color: #f3f4f6; color: #4a5568; }
-        .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        
-        /* Sidebar Menu */
-        .sidebar-card { background: white; border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        .menu-link { display: block; padding: 12px 20px; color: #4a5568; text-decoration: none; font-weight: 600; transition: 0.3s; border-left: 3px solid transparent; }
-        .menu-link:hover, .menu-link.active { background-color: #f7fafc; color: #667eea; border-left-color: #667eea; }
+        body { background-color: #f1f5f9; }
 
-        /* Post Item */
-        .post-card {
-            background: white; border-radius: 15px; border: none; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px;
-            transition: transform 0.2s;
+        /* HEADER */
+        .forum-banner {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            border-radius: 16px; padding: 30px; color: white; margin-bottom: 25px; position: relative; overflow: hidden;
         }
-        .post-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-        .avatar-box { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; }
-        .avatar-placeholder { width: 45px; height: 45px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #718096; }
-        
-        .btn-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; }
-        .btn-gradient:hover { color: white; opacity: 0.9; }
-    </style>
-</head>
-<body>
+        .forum-banner.internal-mode { background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); }
+        .banner-icon { position: absolute; right: 20px; bottom: -20px; font-size: 6rem; opacity: 0.15; transform: rotate(-15deg); }
 
-    <nav class="navbar navbar-expand-lg sticky-top mb-4">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url('/dashboard') }}">
-                <i class="fa-solid fa-graduation-cap text-primary me-2"></i>SPNC<span class="text-primary">Edu</span>
-            </a>
-            <div class="d-flex align-items-center">
-                <a href="{{ url('/dashboard') }}" class="btn btn-light btn-sm rounded-pill fw-bold text-muted">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
-                </a>
+        /* POST CARD */
+        .post-card {
+            background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;
+            border: 1px solid #e2e8f0; transition: 0.2s; position: relative;
+        }
+        .post-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #6366f1; }
+        
+        /* Badges */
+        .badge-exam { background: #eef2ff; color: #4f46e5; font-size: 0.75rem; font-weight: 700; padding: 5px 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
+        .badge-solved { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+        
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        
+        /* Sidebar Link */
+        .nav-link-custom {
+            display: flex; justify-content: space-between; align-items: center; padding: 12px 15px;
+            color: #475569; text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.2s;
+        }
+        .nav-link-custom:hover, .nav-link-custom.active { background: #fff; color: #4f46e5; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+@endpush
+
+@section('content')
+
+    <div class="forum-banner {{ $isInternal ? 'internal-mode' : '' }}">
+        <div class="position-relative" style="z-index: 2;">
+            @if($isInternal)
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-briefcase me-2"></i> Góc Chuyên Môn</h2>
+                <p class="mb-0 opacity-90 small">Trao đổi nghiệp vụ dành riêng cho Giáo viên.</p>
+            @else
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-comments me-2"></i> Thảo luận Đề thi</h2>
+                <p class="mb-0 opacity-90 small">Hỏi đáp, giải thích chi tiết các câu hỏi trong đề thi THPT.</p>
+            @endif
+        </div>
+        <i class="fa-solid {{ $isInternal ? 'fa-user-tie' : 'fa-users' }} banner-icon"></i>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="d-grid gap-2 mb-4">
+                <button class="btn btn-success fw-bold py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                    <i class="fa-solid fa-pen-to-square me-2"></i> Đăng câu hỏi mới
+                </button>
+                
+                @if(Auth::user()->role == 'teacher')
+                    <hr class="my-2">
+                    <a href="{{ route('forum.index') }}" class="nav-link-custom {{ !$isInternal ? 'active' : '' }}">
+                        <span><i class="fa-solid fa-users me-2"></i> Cộng đồng chung</span>
+                    </a>
+                    <a href="{{ route('teacher.forum.internal') }}" class="nav-link-custom {{ $isInternal ? 'active' : '' }}">
+                        <span><i class="fa-solid fa-lock me-2 text-danger"></i> Phòng Giáo viên</span>
+                    </a>
+                @endif
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold text-uppercase text-muted small mb-3">Bộ lọc</h6>
+                    <div class="d-flex flex-column gap-1">
+                        <a href="#" class="nav-link-custom py-2 text-sm"><i class="fa-solid fa-circle-question me-2 text-warning"></i> Chưa có đáp án</a>
+                        <a href="#" class="nav-link-custom py-2 text-sm"><i class="fa-solid fa-check-circle me-2 text-success"></i> Đã giải quyết</a>
+                        <a href="#" class="nav-link-custom py-2 text-sm"><i class="fa-solid fa-fire me-2 text-danger"></i> Thảo luận sôi nổi</a>
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-3 mb-4">
-                <div class="sidebar-card mb-3">
-                    <div class="p-3 border-bottom">
-                        <a href="{{ route('forum.create') }}" class="btn btn-gradient w-100 rounded-pill fw-bold py-2 shadow-sm">
-                            <i class="fa-solid fa-plus me-1"></i> Đặt câu hỏi mới
-                        </a>
-                    </div>
-                    <div class="py-2">
-                        <a href="#" class="menu-link active"><i class="fa-solid fa-fire me-2"></i>Mới nhất</a>
-                        <a href="#" class="menu-link"><i class="fa-regular fa-comments me-2"></i>Sôi nổi nhất</a>
-                        <a href="#" class="menu-link"><i class="fa-regular fa-circle-check me-2"></i>Đã giải quyết</a>
-                    </div>
+        <div class="col-lg-9">
+            
+            <div class="bg-white p-3 rounded-3 border mb-3 shadow-sm d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm câu hỏi, mã đề...">
                 </div>
-
-                <div class="sidebar-card p-4 text-center">
-                    <h6 class="text-muted fw-bold text-uppercase small">Cộng đồng</h6>
-                    <h3 class="fw-bold text-primary">{{ $posts->total() }}</h3>
-                    <p class="small text-muted mb-0">Chủ đề thảo luận</p>
-                </div>
+                <select class="form-select w-auto fw-bold text-secondary">
+                    <option>Mới nhất</option>
+                    <option>Cũ nhất</option>
+                </select>
             </div>
 
-            <div class="col-lg-9">
-                <div class="mb-4">
-                    <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white">
-                        <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                        <input type="text" class="form-control border-0 py-3" placeholder="Tìm kiếm câu hỏi hoặc chủ đề...">
-                        <button class="btn btn-primary px-4 fw-bold">Tìm</button>
-                    </div>
-                </div>
-
-                @forelse($posts as $post)
-                <div class="card post-card p-3">
-                    <div class="d-flex">
-                        <div class="me-3">
-                            @if($post->user->avatar)
-                                <img src="{{ asset('storage/' . $post->user->avatar) }}" class="avatar-box border">
-                            @else
-                                <div class="avatar-placeholder">{{ substr($post->user->name, 0, 1) }}</div>
-                            @endif
-                        </div>
-                        
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="fw-bold text-dark">
-                                    {{ $post->user->name }}
-                                    @if($post->user->role == 'teacher')
-                                        <i class="fa-solid fa-circle-check text-primary ms-1" title="Giáo viên"></i>
+            @forelse($posts as $post)
+            <div class="post-card">
+                <div class="d-flex gap-3">
+                    <img src="https://ui-avatars.com/api/?name={{ $post->user->name }}&background=random" class="user-avatar flex-shrink-0">
+                    
+                    <div class="flex-grow-1">
+                        @if($post->related_exam_id)
+                            <a href="{{ route('forum.show', $post->id) }}" class="text-decoration-none">
+                                <span class="badge-exam">
+                                    <i class="fa-solid fa-link"></i> {{ $post->exam->title ?? 'Đề thi đã xóa' }} 
+                                    @if($post->related_question_no)
+                                        - Câu {{ $post->related_question_no }}
                                     @endif
                                 </span>
-                                <small class="text-muted">{{ $post->created_at->diffForHumans() }}</small>
-                            </div>
-                            
-                            <h5 class="fw-bold mb-2">
-                                <a href="{{ route('forum.show', $post->id) }}" class="text-decoration-none text-dark stretched-link">
-                                    {{ $post->title }}
-                                </a>
-                            </h5>
-                            
-                            <p class="text-muted small mb-2 text-truncate" style="max-width: 90%;">
-                                {{ Str::limit($post->content, 150) }}
-                            </p>
+                            </a>
+                        @endif
 
-                            <div class="d-flex align-items-center text-muted small mt-3">
-                                <span class="me-4"><i class="fa-regular fa-comment-dots me-1"></i> {{ $post->replies_count }} trả lời</span>
-                                <span><i class="fa-regular fa-eye me-1"></i> 0 lượt xem</span> </div>
+                        <h5 class="fw-bold mb-1">
+                            <a href="{{ route('forum.show', $post->id) }}" class="text-decoration-none text-dark stretched-link">
+                                {{ $post->title }}
+                            </a>
+                        </h5>
+                        
+                        <p class="text-secondary small mb-2 text-truncate" style="max-width: 600px;">
+                            {{ Str::limit(strip_tags($post->content), 120) }}
+                        </p>
+
+                        <div class="d-flex align-items-center gap-3 small text-muted">
+                            <span class="fw-bold text-dark">{{ $post->user->name }}</span>
+                            <span>&bull; {{ $post->created_at->diffForHumans() }}</span>
+                            
+                            @if($post->is_solved)
+                                <span class="badge-solved"><i class="fa-solid fa-check"></i> Đã có đáp án</span>
+                            @endif
+
+                            @if($post->is_pinned)
+                                <span class="text-danger fw-bold"><i class="fa-solid fa-thumbtack"></i> Đã ghim</span>
+                            @endif
                         </div>
                     </div>
-                </div>
-                @empty
-                <div class="text-center py-5">
-                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/searching-data-2978368-2476744.png" width="200" style="opacity: 0.7;">
-                    <h5 class="mt-3 text-muted">Chưa có chủ đề nào. Hãy là người đầu tiên!</h5>
-                </div>
-                @endforelse
 
-                <div class="mt-4">
-                    {{ $posts->links() }}
+                    <div class="text-end ps-3 d-flex flex-column justify-content-center border-start">
+                        <div class="fs-5 fw-bold text-primary">{{ $post->replies_count ?? 0 }}</div>
+                        <div class="small text-muted" style="font-size: 0.7rem;">Trả lời</div>
+                    </div>
                 </div>
+            </div>
+            @empty
+            <div class="text-center py-5">
+                <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-data-found-8867280-7265556.png" width="150" class="opacity-50 mb-3">
+                <h6 class="fw-bold text-muted">Chưa có thảo luận nào.</h6>
+                <p class="small text-muted">Hãy là người đầu tiên đặt câu hỏi!</p>
+            </div>
+            @endforelse
+            
+            <div class="mt-4">
+                {{ $posts->links() }}
             </div>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="modal fade" id="createPostModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form action="{{ route('forum.store') }}" method="POST" class="modal-content">
+                @csrf
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Tạo thảo luận mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @if(Auth::user()->role == 'teacher')
+                    <div class="mb-3 p-3 bg-fce border rounded">
+                        <label class="fw-bold mb-2 small text-uppercase text-muted">Phạm vi đăng bài:</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="scope" id="scopePublic" value="public" {{ !$isInternal ? 'checked' : '' }}>
+                            <label class="btn btn-outline-primary fw-bold" for="scopePublic"><i class="fa-solid fa-users"></i> Cộng đồng Học sinh</label>
+
+                            <input type="radio" class="btn-check" name="scope" id="scopeTeacher" value="teacher" {{ $isInternal ? 'checked' : '' }}>
+                            <label class="btn btn-outline-danger fw-bold" for="scopeTeacher"><i class="fa-solid fa-lock"></i> Góc Chuyên môn (GV)</label>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="mb-3">
+                        <label class="fw-bold">Tiêu đề tóm tắt</label>
+                        <input type="text" name="title" class="form-control" placeholder="Ví dụ: Hỏi về cách giải câu 10 đề thi thử số 1..." required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold">Đoạn mã (Nếu có)</label>
+                        <textarea name="code_snippet" class="form-control font-monospace bg-dark text-white small" rows="3" placeholder="// Paste code Pascal/C++ vào đây..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold">Nội dung chi tiết</label>
+                        <textarea name="content" class="form-control" rows="5" placeholder="Mô tả chi tiết vấn đề của bạn..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Đăng bài ngay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+@endsection

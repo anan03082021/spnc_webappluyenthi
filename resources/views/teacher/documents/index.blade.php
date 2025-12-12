@@ -1,147 +1,146 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Quản lý Tài liệu - Giáo viên</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+@extends('layouts.teacher')
+
+@section('title', 'Kho Tài liệu')
+
+@push('styles')
     <style>
-        body { font-family: 'Nunito', sans-serif; background-color: #f8f9fa; color: #4a5568; }
-        
-        /* Navbar */
-        .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* --- DOCUMENT MANAGER STYLE --- */
+        body { background-color: #f8fafc; }
 
-        /* Card & Table */
-        .table-card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        .table-custom thead { background-color: #f1f5f9; color: #64748b; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .table-custom th { padding: 15px 20px; font-weight: 700; border-bottom: none; }
-        .table-custom td { padding: 15px 20px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; background: white; }
-        
-        /* File Icon Styles */
-        .file-icon-box {
-            width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 15px;
+        /* Storage Info Bar */
+        .storage-bar {
+            background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
         }
-        .bg-soft-danger { background-color: #fee2e2; color: #ef4444; }   /* PDF */
-        .bg-soft-primary { background-color: #dbeafe; color: #3b82f6; } /* Word */
-        .bg-soft-success { background-color: #d1fae5; color: #10b981; } /* Excel */
-        .bg-soft-warning { background-color: #fef3c7; color: #f59e0b; } /* PPT */
-        .bg-soft-secondary { background-color: #e2e8f0; color: #64748b; } /* Other */
+        .progress-stack { width: 200px; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #818cf8); width: 45%; } /* Giả lập */
 
-        .btn-icon { width: 35px; height: 35px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; border: none; }
-        .btn-icon:hover { background-color: #f1f5f9; transform: scale(1.1); }
+        /* Document Grid */
+        .doc-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;
+        }
+
+        .doc-card {
+            background: white; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0;
+            position: relative; transition: 0.2s; cursor: pointer; text-decoration: none; display: block;
+        }
+        .doc-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: #6366f1; }
+
+        .doc-icon {
+            width: 50px; height: 50px; border-radius: 12px; background: #f8fafc; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 15px;
+        }
+        
+        .doc-title { font-weight: 700; color: #334155; font-size: 0.95rem; margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 44px; }
+        .doc-meta { font-size: 0.75rem; color: #94a3b8; font-weight: 600; display: flex; justify-content: space-between; }
+
+        /* Action Menu (3 dots) */
+        .doc-menu-btn {
+            position: absolute; top: 15px; right: 15px; color: #cbd5e1; border: none; background: transparent;
+        }
+        .doc-menu-btn:hover { color: #334155; }
+
+        /* Upload Button */
+        .btn-upload {
+            background: #4f46e5; color: white; border-radius: 10px; padding: 10px 20px; 
+            font-weight: 700; border: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+        }
+        .btn-upload:hover { background: #4338ca; color: white; }
     </style>
-</head>
-<body>
+@endpush
 
-    <nav class="navbar navbar-expand-lg sticky-top mb-4">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ route('teacher.dashboard') }}">
-                <i class="fa-solid fa-chalkboard-user text-primary me-2"></i>GV.<span class="text-primary">Portal</span>
-            </a>
-            <a href="{{ route('teacher.dashboard') }}" class="btn btn-light btn-sm fw-bold border">
-                <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
-            </a>
+@section('content')
+
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+        <div>
+            <h2 class="fw-bold text-dark m-0">Kho Tài liệu</h2>
+            <p class="text-muted m-0 small">Quản lý giáo trình và tài liệu tham khảo.</p>
         </div>
-    </nav>
+        <button class="btn-upload" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Tải lên
+        </button>
+    </div>
 
-    <div class="container py-3">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="storage-bar" data-aos="fade-up">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-light p-3 text-primary"><i class="fa-solid fa-hard-drive fs-4"></i></div>
             <div>
-                <h3 class="fw-bold m-0 text-dark">Kho Tài liệu</h3>
-                <p class="text-muted small m-0">Quản lý giáo trình và tài liệu ôn tập cho học sinh.</p>
+                <h6 class="fw-bold m-0 text-dark">Dung lượng sử dụng</h6>
+                <div class="progress-stack">
+                    <div class="progress-fill" style="width: {{ min(($totalUsage / 500) * 100, 100) }}%"></div>
+                </div>
+                <div class="small text-muted mt-1">{{ number_format($totalUsage, 2) }} MB / 500 MB</div>
             </div>
-            <a href="{{ route('teacher.documents.create') }}" class="btn btn-primary fw-bold shadow-sm px-4 py-2 rounded-pill">
-                <i class="fa-solid fa-cloud-arrow-up me-2"></i>Upload mới
-            </a>
         </div>
-
-        @if(session('success'))
-            <div class="alert alert-success border-0 shadow-sm rounded-3 mb-4">
-                <i class="fa-solid fa-check-circle me-2"></i> {{ session('success') }}
-            </div>
-        @endif
-
-        <div class="card table-card">
-            <div class="table-responsive">
-                <table class="table table-custom mb-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 40%">Tên Tài Liệu</th>
-                            <th>Chủ đề / Chương</th>
-                            <th>Ngày đăng</th>
-                            <th class="text-end">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($documents as $doc)
-                            @php
-                                // Logic chọn màu icon dựa trên đuôi file
-                                $ext = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
-                                $iconClass = match($ext) {
-                                    'pdf' => 'bg-soft-danger',
-                                    'doc', 'docx' => 'bg-soft-primary',
-                                    'xls', 'xlsx' => 'bg-soft-success',
-                                    'ppt', 'pptx' => 'bg-soft-warning',
-                                    default => 'bg-soft-secondary'
-                                };
-                                $faIcon = match($ext) {
-                                    'pdf' => 'fa-file-pdf',
-                                    'doc', 'docx' => 'fa-file-word',
-                                    'ppt', 'pptx' => 'fa-file-powerpoint',
-                                    'xls', 'xlsx' => 'fa-file-excel',
-                                    default => 'fa-file'
-                                };
-                            @endphp
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="file-icon-box {{ $iconClass }}">
-                                            <i class="fa-regular {{ $faIcon }}"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark text-truncate" style="max-width: 300px;" title="{{ $doc->title }}">
-                                                {{ $doc->title }}
-                                            </div>
-                                            <small class="text-muted text-uppercase">{{ $ext }} File</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-secondary border rounded-pill px-3">
-                                        {{ $doc->category->name ?? 'Tài liệu chung' }}
-                                    </span>
-                                </td>
-                                <td class="text-muted">
-                                    {{ $doc->created_at->format('d/m/Y') }}
-                                </td>
-                                <td class="text-end">
-                                    <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-icon text-primary" title="Xem / Tải về">
-                                        <i class="fa-solid fa-download"></i>
-                                    </a>
-                                    
-                                    <form action="{{ route('teacher.documents.destroy', $doc->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn chắc chắn muốn xóa tài liệu này?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="btn btn-icon text-danger" title="Xóa tài liệu">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-box-4064358-3363919.png" width="120" style="opacity: 0.6">
-                                    <h5 class="mt-3 text-muted fw-bold">Thư viện trống</h5>
-                                    <p class="text-muted small">Bạn chưa tải lên tài liệu nào.</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+        <div class="text-end d-none d-md-block">
+            <div class="fw-bold text-dark fs-4">{{ $documents->count() }}</div>
+            <div class="small text-muted fw-bold text-uppercase">Tài liệu</div>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="doc-grid" data-aos="fade-up" data-aos-delay="100">
+        @forelse($documents as $doc)
+        <div class="position-relative">
+            <a href="{{ route('teacher.documents.download', $doc->id) }}" class="doc-card">
+                <div class="doc-icon">
+                    <i class="fa-regular {{ $doc->icon }}"></i>
+                </div>
+                <div class="doc-title" title="{{ $doc->title }}">{{ $doc->title }}</div>
+                <div class="doc-meta">
+                    <span>{{ strtoupper($doc->file_type) }}</span>
+                    <span>{{ $doc->file_size }} MB</span>
+                </div>
+            </a>
+
+            <div class="dropdown" style="position: absolute; top: 15px; right: 15px;">
+                <button class="doc-menu-btn" type="button" data-bs-toggle="dropdown">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                    <li><a class="dropdown-item small fw-bold" href="{{ route('teacher.documents.download', $doc->id) }}"><i class="fa-solid fa-download me-2 text-primary"></i> Tải xuống</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="{{ route('teacher.documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Xóa tài liệu này?');">
+                            @csrf @method('DELETE')
+                            <button class="dropdown-item small fw-bold text-danger"><i class="fa-solid fa-trash me-2"></i> Xóa file</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        @empty
+        <div class="col-12 text-center py-5">
+            <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-folder-4064360-3363921.png" width="120" style="opacity: 0.5;">
+            <p class="text-muted mt-3 fw-bold">Chưa có tài liệu nào.</p>
+        </div>
+        @endforelse
+    </div>
+
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="{{ route('teacher.documents.store') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+                @csrf
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Tải lên tài liệu mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên hiển thị</label>
+                        <input type="text" name="title" class="form-control" placeholder="Ví dụ: Đề cương Toán HK1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn file</label>
+                        <input type="file" name="file" class="form-control" required>
+                        <div class="form-text">Hỗ trợ: PDF, Word, Excel, PowerPoint, ZIP (Max 10MB)</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Tải lên</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+@endsection

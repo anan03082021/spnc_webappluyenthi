@@ -25,7 +25,8 @@ class User extends Authenticatable
     'student_code',
     'class_name', // Phải có
     'phone',      // Phải có
-    'avatar',     // Phải có
+    'avatar',
+    'classroom_id',     // Phải có
 ];
 // Quan hệ: Một người dùng có nhiều kết quả thi
 public function results() {
@@ -54,4 +55,14 @@ public function results() {
             'password' => 'hashed',
         ];
     }
+    // Thêm vào trong class User
+    public function bookmarks()
+    {
+        // Quan hệ nhiều-nhiều với bảng exams thông qua bảng trung gian exam_user
+        return $this->belongsToMany(Exam::class, 'exam_user', 'user_id', 'exam_id')->withTimestamps();
+    }
+
+public function classroom() {
+    return $this->belongsTo(Classroom::class, 'classroom_id');
+}
 }
