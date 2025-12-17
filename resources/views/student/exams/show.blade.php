@@ -1,175 +1,252 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Làm bài thi: {{ $exam->title }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+@extends('layouts.student')
 
+@section('title', $exam->title)
+
+@push('styles')
     <style>
-        body { font-family: 'Nunito', sans-serif; background-color: #f0f2f5; }
+        /* Layout */
+        body { background-color: #f1f5f9; padding-bottom: 80px; /* Chừa chỗ cho thanh thời gian ở dưới */ }
+        .exam-container { max-width: 1200px; margin: 30px auto; }
         
-        /* Sidebar Sticky (Đồng hồ & Palette) */
-        .sidebar-sticky { position: sticky; top: 20px; z-index: 100; }
-        .timer-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; }
-        .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        .palette-item {
-            width: 100%; aspect-ratio: 1; border: 1px solid #cbd5e0; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; font-weight: bold;
-            cursor: pointer; background: white; color: #4a5568; transition: 0.2s; text-decoration: none;
+        /* Sidebar (Danh sách câu hỏi) */
+        .sidebar-nav {
+            position: sticky; top: 90px; /* Cách top để không bị menu che */
+            background: white; border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 20px; 
+            max-height: 80vh; overflow-y: auto;
         }
-        .palette-item:hover { background-color: #edf2f7; }
-        .palette-item.answered { background-color: #48bb78; color: white; border-color: #48bb78; }
+        .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .q-btn {
+            width: 100%; aspect-ratio: 1; border: 1px solid #e2e8f0; background: white; border-radius: 8px;
+            font-weight: 600; color: #64748b; transition: 0.2s; font-size: 0.9rem; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .q-btn:hover { background: #f1f5f9; color: #0f172a; }
+        .q-btn.answered { background: #4f46e5; color: white; border-color: #4f46e5; }
 
-        /* Question Card */
-        .question-card { background: white; border-radius: 15px; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .question-number { background-color: #ebf8ff; color: #3182ce; padding: 5px 15px; border-radius: 20px; font-weight: 800; font-size: 0.9rem; display: inline-block; margin-bottom: 15px; }
+        /* Main Content */
+        .question-card {
+            background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px;
+            margin-bottom: 24px; scroll-margin-top: 100px; 
+        }
+        .q-title { font-weight: 700; color: #1e293b; font-size: 1.05rem; margin-bottom: 16px; line-height: 1.6; }
         
-        /* Custom Radio Option */
+        /* Radio Custom */
         .option-label {
-            display: block; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 10px;
-            cursor: pointer; transition: all 0.2s; margin-bottom: 10px; position: relative;
+            display: flex; align-items: center; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px;
+            cursor: pointer; transition: 0.2s; margin-bottom: 8px;
         }
-        .option-label:hover { background-color: #f7fafc; border-color: #cbd5e0; }
+        .option-label:hover { background-color: #f8fafc; border-color: #cbd5e0; }
+        .form-check-input:checked + .option-text { color: #4f46e5; font-weight: 700; }
+        .option-label:has(.form-check-input:checked) { border-color: #4f46e5; background-color: #e0e7ff; }
+
+        /* Timer Header (ĐÃ CHUYỂN XUỐNG DƯỚI) */
+        .timer-bar {
+            background: #1e293b; color: white; padding: 12px 30px; 
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; /* Z-index cao để nổi lên trên */
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15); border-top: 4px solid #fbbf24;
+        }
+        .timer-clock { font-family: 'Courier New', monospace; font-size: 1.6rem; font-weight: 800; color: #fbbf24; letter-spacing: 2px; }
         
-        /* Khi radio được chọn */
-        .form-check-input:checked + .option-label {
-            background-color: #ebf8ff; border-color: #3182ce; color: #2c5282; font-weight: 600;
-        }
-        /* Ẩn radio mặc định xấu xí đi */
-        .form-check-input { position: absolute; opacity: 0; }
+        .tf-table th { background: #f8fafc; font-size: 0.85rem; text-transform: uppercase; color: #64748b; }
     </style>
-</head>
-<body class="py-4">
+@endpush
 
-    <div class="container">
-        <form action="{{ route('student.exams.store', $exam->id) }}" method="POST" id="examForm">
-            @csrf
+@section('content')
+
+<div class="container-fluid exam-container">
+    <form action="{{ route('student.exams.store', $exam->id) }}" method="POST" id="examForm">
+        @csrf
+        <form id="examForm" action="{{ route('student.exams.store', $exam->id) }}" method="POST">
+    @csrf
+    {{-- THÊM DÒNG NÀY: Input để chứa thời gian làm bài (tính bằng giây) --}}
+    <input type="hidden" name="completion_time" id="completion_time_input" value="0">
+    
+        <div class="row">
             
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold m-0">{{ $exam->title }}</h4>
-                        <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary btn-sm" onclick="return confirm('Bạn muốn thoát? Kết quả sẽ không được lưu.')">Thoát</a>
+            <div class="col-lg-3 d-none d-lg-block">
+                <div class="sidebar-nav">
+                    <h6 class="fw-bold mb-3 text-secondary text-uppercase small ls-1">Mục lục câu hỏi</h6>
+                    <div class="q-grid">
+                        @foreach($exam->questions as $index => $q)
+                            <a href="#q-{{ $q->id }}" class="btn q-btn" id="nav-btn-{{ $q->id }}">
+                                {{ $index + 1 }}
+                            </a>
+                        @endforeach
                     </div>
-
-                    @foreach($exam->questions as $index => $q)
-                    <div class="question-card p-4" id="question_{{ $q->id }}">
-                        <span class="question-number">Câu {{ $index + 1 }}</span>
-                        <h5 class="mb-4 lh-base">{{ $q->content }}</h5>
-
-                        <div class="options-group">
-                            <div class="mb-2">
-                                <input class="form-check-input option-input" type="radio" 
-                                       name="answers[{{ $q->id }}]" value="A" id="q{{$q->id}}A" 
-                                       data-index="{{ $index + 1 }}">
-                                <label class="option-label" for="q{{$q->id}}A">
-                                    <strong class="me-2">A.</strong> {{ $q->option_a }}
-                                </label>
-                            </div>
-                            <div class="mb-2">
-                                <input class="form-check-input option-input" type="radio" 
-                                       name="answers[{{ $q->id }}]" value="B" id="q{{$q->id}}B" 
-                                       data-index="{{ $index + 1 }}">
-                                <label class="option-label" for="q{{$q->id}}B">
-                                    <strong class="me-2">B.</strong> {{ $q->option_b }}
-                                </label>
-                            </div>
-                            <div class="mb-2">
-                                <input class="form-check-input option-input" type="radio" 
-                                       name="answers[{{ $q->id }}]" value="C" id="q{{$q->id}}C" 
-                                       data-index="{{ $index + 1 }}">
-                                <label class="option-label" for="q{{$q->id}}C">
-                                    <strong class="me-2">C.</strong> {{ $q->option_c }}
-                                </label>
-                            </div>
-                            <div class="mb-2">
-                                <input class="form-check-input option-input" type="radio" 
-                                       name="answers[{{ $q->id }}]" value="D" id="q{{$q->id}}D" 
-                                       data-index="{{ $index + 1 }}">
-                                <label class="option-label" for="q{{$q->id}}D">
-                                    <strong class="me-2">D.</strong> {{ $q->option_d }}
-                                </label>
-                            </div>
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-flex align-items-center gap-2 mb-2 small text-muted">
+                            <span class="d-inline-block bg-white border rounded" style="width: 15px; height: 15px;"></span> Chưa làm
                         </div>
-                    </div>
-                    @endforeach
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="sidebar-sticky">
-                        <div class="timer-card p-4 text-center mb-3 shadow-lg">
-                            <p class="mb-0 small text-white-50 text-uppercase fw-bold">Thời gian còn lại</p>
-                            <h1 class="fw-bold display-4 mb-0" id="countdownTimer">
-                                {{ str_pad($exam->duration, 2, '0', STR_PAD_LEFT) }}:00
-                            </h1>
-                        </div>
-
-                        <div class="card border-0 shadow-sm rounded-4">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-3 text-muted">Danh sách câu hỏi</h6>
-                                <div class="palette-grid">
-                                    @foreach($exam->questions as $index => $q)
-                                        <a href="#question_{{ $q->id }}" class="palette-item" id="palette_{{ $index + 1 }}">
-                                            {{ $index + 1 }}
-                                        </a>
-                                    @endforeach
-                                </div>
-                                <hr>
-                                <div class="d-flex justify-content-between small text-muted mb-3">
-                                    <span><span class="badge bg-white border text-dark">1</span> Chưa làm</span>
-                                    <span><span class="badge bg-success">1</span> Đã làm</span>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" onclick="return confirm('Bạn chắc chắn muốn nộp bài? Kiểm tra kỹ lại nhé!')">
-                                    Nộp Bài Thi
-                                </button>
-                            </div>
+                        <div class="d-flex align-items-center gap-2 small text-muted">
+                            <span class="d-inline-block rounded" style="width: 15px; height: 15px; background: #4f46e5;"></span> Đã làm
                         </div>
                     </div>
                 </div>
             </div>
-        </form>
+
+            <div class="col-lg-9">
+                <div class="card mb-4 border-0 shadow-sm bg-white">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold text-primary m-0">{{ $exam->title }}</h4>
+                        <p class="text-muted m-0 mt-1"><i class="fa-regular fa-clock me-1"></i> Thời gian: {{ $exam->duration }} phút &bull; {{ $exam->questions->count() }} câu hỏi</p>
+                    </div>
+                </div>
+
+                @foreach($exam->questions as $index => $q)
+                    <div class="question-card" id="q-{{ $q->id }}">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="badge bg-light text-dark border fw-bold fs-6">
+                                Câu {{ $index + 1 }} 
+                            </span>
+                            @if($q->level)
+                                <span class="badge bg-info bg-opacity-10 text-info border border-info">{{ strtoupper($q->level) }}</span>
+                            @endif
+                        </div>
+
+                        <div class="q-title" style="white-space: pre-wrap;">{{ $q->content }}</div>
+                        
+                        @if($q->image)
+                            <div class="mb-3 text-center">
+                                <img src="{{ asset('storage/' . $q->image) }}" class="img-fluid rounded border shadow-sm" style="max-height: 300px;">
+                            </div>
+                        @endif
+
+                        @if($q->type == 'one_choice')
+                            <div class="row g-2">
+                                @foreach(['A', 'B', 'C', 'D'] as $opt)
+                                    <div class="col-md-6">
+                                        <label class="option-label">
+                                            <input class="form-check-input me-3" type="radio" 
+                                                   name="answers[{{ $q->id }}]" 
+                                                   value="{{ $opt }}"
+                                                   onchange="markAnswered({{ $q->id }})">
+                                            <span class="option-text">
+                                                <span class="fw-bold me-1">{{ $opt }}.</span> 
+                                                {{ $q->{'option_'.strtolower($opt)} }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @elseif($q->type == 'true_false')
+                            <div class="table-responsive border rounded-3 overflow-hidden">
+                                <table class="table table-bordered table-striped mb-0 tf-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" width="50">Ý</th>
+                                            <th>Nội dung mệnh đề</th>
+                                            <th class="text-center" width="150">Đúng / Sai</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach(['a', 'b', 'c', 'd'] as $key)
+                                            <tr>
+                                                <td class="text-center fw-bold">{{ strtoupper($key) }}</td>
+                                                <td>{{ $q->{'option_'.$key} }}</td>
+                                                <td class="text-center">
+                                                    <div class="btn-group" role="group">
+                                                        <input type="radio" class="btn-check" name="answers[{{ $q->id }}][{{ $key }}]" id="tf_{{$q->id}}_{{$key}}_T" value="T" onchange="markAnswered({{ $q->id }})">
+                                                        <label class="btn btn-outline-success btn-sm fw-bold" for="tf_{{$q->id}}_{{$key}}_T">Đúng</label>
+
+                                                        <input type="radio" class="btn-check" name="answers[{{ $q->id }}][{{ $key }}]" id="tf_{{$q->id}}_{{$key}}_F" value="F" onchange="markAnswered({{ $q->id }})">
+                                                        <label class="btn btn-outline-danger btn-sm fw-bold" for="tf_{{$q->id}}_{{$key}}_F">Sai</label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+
+                <div class="text-center mt-5 mb-5 pb-5">
+                    <p class="text-muted small">Bạn đã hoàn thành bài thi? Hãy kiểm tra kỹ trước khi nộp.</p>
+                    <button type="button" class="btn btn-primary btn-lg px-5 fw-bold shadow" onclick="submitExam()">
+                        <i class="fa-solid fa-paper-plane me-2"></i> NỘP BÀI NGAY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="timer-bar">
+    <div class="d-flex align-items-center gap-3">
+        <div class="d-flex flex-column">
+            <small class="text-white-50" style="font-size: 0.75rem; text-transform: uppercase;">Thời gian còn lại</small>
+            <div id="countdown" class="timer-clock">00:00:00</div>
+        </div>
     </div>
+    <button type="button" class="btn btn-warning fw-bold text-dark px-4" onclick="submitExam()">
+        Nộp bài
+    </button>
+</div>
 
-    <script>
-        // 1. Đồng hồ đếm ngược
-        let timeInMinutes = {{ $exam->duration }};
-        let timeInSeconds = timeInMinutes * 60;
-        
-        const timerElement = document.getElementById('countdownTimer');
-        
-        const countdown = setInterval(() => {
-            const minutes = Math.floor(timeInSeconds / 60);
-            let seconds = timeInSeconds % 60;
-            
-            seconds = seconds < 10 ? '0' + seconds : seconds;
-            timerElement.innerText = `${minutes}:${seconds}`;
-            
-            timeInSeconds--;
-            
-            // Hết giờ -> Tự động nộp bài
-            if (timeInSeconds < 0) {
-                clearInterval(countdown);
-                alert('Đã hết giờ làm bài! Hệ thống sẽ tự động nộp bài.');
-                document.getElementById('examForm').submit();
-            }
-        }, 1000);
+@endsection
 
-        // 2. Logic tô màu Palette khi chọn đáp án
-        const options = document.querySelectorAll('.option-input');
+@push('scripts')
+<script>
+    // 1. Logic đếm ngược thời gian
+    let timeRemaining = {{ $exam->duration * 60 }}; // Đổi phút sang giây
+    const countdownEl = document.getElementById('countdown');
+    const examForm = document.getElementById('examForm');
+    
+    // Hàm format thời gian hh:mm:ss
+    function formatTime(seconds) {
+        const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+
+    const timerInterval = setInterval(() => {
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            countdownEl.innerHTML = "00:00:00";
+            
+            // --- FIX LỖI: Gỡ cảnh báo trước khi tự động nộp ---
+            window.onbeforeunload = null; 
+            
+            alert("Hết giờ làm bài! Hệ thống sẽ tự động nộp bài.");
+            examForm.submit();
+            return;
+        }
         
-        options.forEach(option => {
-            option.addEventListener('change', function() {
-                const questionIndex = this.getAttribute('data-index');
-                const paletteItem = document.getElementById(`palette_${questionIndex}`);
-                
-                // Thêm class 'answered' để tô xanh ô số
-                if (paletteItem) {
-                    paletteItem.classList.add('answered');
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+        countdownEl.innerHTML = formatTime(timeRemaining);
+        
+        // Cảnh báo khi còn dưới 5 phút (đổi màu đỏ)
+        if (timeRemaining < 300) {
+            countdownEl.style.color = '#ef4444'; 
+            document.querySelector('.timer-bar').style.borderColor = '#ef4444';
+        }
+        
+        timeRemaining--;
+    }, 1000);
+
+    // 2. Đánh dấu câu hỏi đã làm trên Sidebar
+    function markAnswered(id) {
+        const navBtn = document.getElementById('nav-btn-' + id);
+        if(navBtn) navBtn.classList.add('answered');
+    }
+
+    // 3. Xác nhận nộp bài (FIX LỖI Ở ĐÂY)
+    function submitExam() {
+        if(confirm('Bạn có chắc chắn muốn nộp bài không?\nHãy kiểm tra kỹ các câu hỏi trước khi xác nhận.')) {
+            // --- QUAN TRỌNG: Gỡ bỏ cảnh báo rời trang ---
+            window.onbeforeunload = null;
+            
+            // Sau đó mới submit form
+            examForm.submit();
+        }
+    }
+
+    // 4. Chặn F5/Back (Cảnh báo)
+    window.onbeforeunload = function() {
+        return "Cảnh báo: Nếu bạn tải lại trang, bài làm sẽ bị mất!";
+    };
+</script>
+@endpush

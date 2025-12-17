@@ -1,120 +1,180 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Thư viện Tài liệu - SPNC Edutech</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+@extends('layouts.student')
 
+@section('title', 'Thư viện Tài liệu')
+
+@push('styles')
     <style>
-        body { font-family: 'Nunito', sans-serif; background-color: #f3f4f6; color: #4a5568; }
-        
-        /* Navbar Minimal */
-        .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* --- GENERAL --- */
+        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; color: #334155; }
 
-        /* Document Card */
+        /* --- HEADER & TOOLBAR --- */
+        .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
+        .header-title { font-weight: 800; color: #0f172a; font-size: 1.6rem; margin: 0; letter-spacing: -0.5px; }
+        .header-subtitle { color: #64748b; font-size: 0.9rem; margin-top: 6px; }
+
+        .toolbar-card {
+            background: white; border-radius: 12px; padding: 16px 20px;
+            border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 30px;
+        }
+        
+        .search-group { position: relative; flex-grow: 1; }
+        .search-input {
+            width: 100%; padding: 10px 15px 10px 42px; border-radius: 8px; border: 1px solid #e2e8f0;
+            background-color: #f8fafc; font-size: 0.9rem; transition: 0.2s;
+        }
+        .search-input:focus { background-color: white; border-color: #4f46e5; outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+
+        .filter-select {
+            padding: 10px 35px 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0;
+            background-color: white; font-weight: 600; color: #475569; cursor: pointer; min-width: 200px;
+        }
+        .filter-select:focus { border-color: #4f46e5; outline: none; }
+
+        /* --- DOCUMENT CARD --- */
         .doc-card {
-            background: white; border: none; border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s ease;
-            height: 100%; position: relative; overflow: hidden;
+            background: white; border-radius: 16px; border: 1px solid #e2e8f0;
+            padding: 20px; position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%; display: flex; flex-direction: column;
         }
-        .doc-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
-        
+        .doc-card:hover {
+            transform: translateY(-5px); box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1); border-color: #cbd5e1;
+        }
+
         .icon-wrapper {
-            height: 120px; display: flex; align-items: center; justify-content: center;
-            background-color: #f8fafc; border-bottom: 1px solid #edf2f7;
+            width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; margin-bottom: 16px; align-self: flex-start;
         }
-        .icon-file { font-size: 50px; }
-        
-        .btn-download {
-            background-color: #ebf8ff; color: #3182ce; font-weight: 700; border: none; width: 100%;
-            padding: 10px; border-radius: 10px; transition: 0.3s;
-        }
-        .btn-download:hover { background-color: #3182ce; color: white; }
+        /* Màu nền Icon */
+        .bg-pdf { background-color: #fef2f2; color: #ef4444; }
+        .bg-word { background-color: #eff6ff; color: #3b82f6; }
+        .bg-excel { background-color: #f0fdf4; color: #22c55e; }
+        .bg-ppt { background-color: #fff7ed; color: #f97316; }
+        .bg-zip { background-color: #f1f5f9; color: #64748b; }
+        .bg-default { background-color: #f8fafc; color: #475569; }
 
-        /* Categories */
-        .nav-pills .nav-link {
-            color: #4a5568; background: white; border: 1px solid #e2e8f0; margin-right: 10px; border-radius: 50px; padding: 8px 20px; font-weight: 600;
+        .doc-category {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            color: #64748b; margin-bottom: 6px;
         }
-        .nav-pills .nav-link.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;
+        .doc-title { 
+            font-weight: 700; color: #1e293b; font-size: 1rem; margin-bottom: 8px; line-height: 1.4; 
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; min-height: 2.8em;
         }
+        .doc-meta { 
+            font-size: 0.8rem; color: #94a3b8; margin-top: auto; padding-top: 15px; 
+            display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0;
+        }
+
+        .btn-download-sm {
+            padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+            background-color: #f1f5f9; color: #475569; text-decoration: none; transition: 0.2s;
+        }
+        .btn-download-sm:hover { background-color: #4f46e5; color: white; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 80px 20px; }
+        .empty-icon { font-size: 4rem; color: #cbd5e1; margin-bottom: 20px; }
     </style>
-</head>
-<body>
+@endpush
 
-    <nav class="navbar navbar-expand-lg sticky-top mb-4">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url('/dashboard') }}">
-                <i class="fa-solid fa-graduation-cap text-primary me-2"></i>SPNC<span class="text-primary">Edu</span>
-            </a>
-            <a href="{{ url('/dashboard') }}" class="btn btn-light btn-sm rounded-pill fw-bold text-muted border">
-                <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
-            </a>
-        </div>
-    </nav>
+@section('content')
 
-    <div class="container py-3">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold text-dark">Thư viện Tài liệu</h2>
-            <p class="text-muted">Tổng hợp giáo trình, đề cương và tài liệu ôn thi chất lượng cao</p>
-        </div>
-
-        <div class="d-flex justify-content-center mb-5 flex-wrap gap-2">
-            <a href="{{ route('student.documents.index') }}" class="btn btn-outline-secondary rounded-pill px-4 {{ !request('category_id') ? 'active bg-primary text-white border-primary' : '' }}">
-                Tất cả
-            </a>
-            @foreach($categories as $cat)
-                <a href="{{ route('student.documents.index', ['category_id' => $cat->id]) }}" 
-                   class="btn btn-outline-secondary rounded-pill px-4 {{ request('category_id') == $cat->id ? 'active bg-primary text-white border-primary' : '' }}">
-                    {{ $cat->name }}
-                </a>
-            @endforeach
-        </div>
-
-        <div class="row g-4">
-            @forelse($documents as $doc)
-                @php
-                    // Xử lý icon dựa trên đuôi file (giả lập)
-                    $ext = pathinfo($doc->file_path, PATHINFO_EXTENSION);
-                    $iconClass = match(strtolower($ext)) {
-                        'pdf' => 'fa-file-pdf text-danger',
-                        'doc', 'docx' => 'fa-file-word text-primary',
-                        'ppt', 'pptx' => 'fa-file-powerpoint text-warning',
-                        'zip', 'rar' => 'fa-file-zipper text-secondary',
-                        default => 'fa-file-lines text-info'
-                    };
-                @endphp
-                <div class="col-md-3 col-sm-6">
-                    <div class="doc-card">
-                        <div class="icon-wrapper">
-                            <i class="fa-regular {{ $iconClass }} icon-file"></i>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="badge bg-light text-secondary mb-2 border">
-                                {{ $doc->category->name ?? 'Tài liệu chung' }}
-                            </div>
-                            <h6 class="card-title fw-bold text-truncate mb-3" title="{{ $doc->title }}">
-                                {{ $doc->title }}
-                            </h6>
-                            <div class="d-flex justify-content-between align-items-center mb-3 text-muted small">
-                                <span><i class="fa-regular fa-clock me-1"></i> {{ $doc->created_at->format('d/m/Y') }}</span>
-                                <span><i class="fa-solid fa-download me-1"></i> Tải về</span>
-                            </div>
-                            <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn-download text-decoration-none text-center d-block">
-                                <i class="fa-solid fa-cloud-arrow-down me-2"></i>Xem / Tải
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="col-12 text-center py-5">
-                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-folder-4048243-3353215.png" width="150" style="opacity: 0.6">
-                    <h5 class="mt-3 text-muted">Chưa có tài liệu nào trong mục này.</h5>
-                </div>
-            @endforelse
+<div class="container-fluid py-4">
+    
+    <div class="page-header" data-aos="fade-down">
+        <div>
+            <h1 class="header-title">Thư viện Tài liệu</h1>
+            <p class="header-subtitle">Tổng hợp giáo trình, đề cương và tài liệu ôn thi chất lượng cao.</p>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="toolbar-card" data-aos="fade-up">
+        <form action="{{ route('student.documents.index') }}" method="GET" class="d-flex w-100 gap-3 align-items-center flex-wrap" id="filterForm">
+            
+            <div class="search-group">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" name="search" class="search-input" 
+                       placeholder="Tìm kiếm tài liệu..." 
+                       value="{{ request('search') }}">
+            </div>
+
+            <div class="filter-group">
+                <select name="category" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="all">📂 Tất cả danh mục</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}" {{ request('category') == $cat->id ? 'selected' : '' }}>
+                            {{ $cat->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            @if(request('search') || (request('category') && request('category') != 'all'))
+                <a href="{{ route('student.documents.index') }}" class="btn btn-light border fw-bold text-danger">
+                    <i class="fa-solid fa-xmark me-1"></i> Xóa lọc
+                </a>
+            @endif
+        </form>
+    </div>
+
+    <div class="row g-4">
+        @forelse($documents as $doc)
+            @php
+                // Xử lý icon và màu sắc
+                $ext = strtolower($doc->file_type);
+                $style = match($ext) {
+                    'pdf' => ['icon' => 'fa-solid fa-file-pdf', 'bg' => 'bg-pdf'],
+                    'doc', 'docx' => ['icon' => 'fa-solid fa-file-word', 'bg' => 'bg-word'],
+                    'xls', 'xlsx' => ['icon' => 'fa-solid fa-file-excel', 'bg' => 'bg-excel'],
+                    'ppt', 'pptx' => ['icon' => 'fa-solid fa-file-powerpoint', 'bg' => 'bg-ppt'],
+                    'zip', 'rar' => ['icon' => 'fa-solid fa-file-zipper', 'bg' => 'bg-zip'],
+                    default => ['icon' => 'fa-regular fa-file-lines', 'bg' => 'bg-default']
+                };
+            @endphp
+
+            <div class="col-xl-3 col-lg-4 col-md-6" data-aos="fade-up">
+                <div class="doc-card">
+                    <div class="icon-wrapper {{ $style['bg'] }}">
+                        <i class="{{ $style['icon'] }}"></i>
+                    </div>
+                    
+                    <div class="doc-category">
+                        {{ $doc->category->name ?? 'Chưa phân loại' }}
+                    </div>
+                    
+                    <h6 class="doc-title" title="{{ $doc->title }}">
+                        {{ $doc->title }}
+                    </h6>
+
+                    <div class="doc-meta">
+                        <div class="d-flex flex-column">
+                            <span class="small">{{ $doc->created_at->format('d/m/Y') }}</span>
+                            <span class="small fw-bold">{{ $doc->file_size }} MB</span>
+                        </div>
+                        <a href="{{ route('student.documents.download', $doc->id) }}" class="btn-download-sm">
+                            <i class="fa-solid fa-download me-1"></i> Tải về
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fa-regular fa-folder-open empty-icon"></i>
+                    <h5 class="fw-bold text-dark">Chưa có tài liệu nào</h5>
+                    <p class="text-muted">Thử thay đổi bộ lọc hoặc quay lại sau nhé.</p>
+                </div>
+            </div>
+        @endforelse
+    </div>
+
+    @if($documents->hasPages())
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $documents->withQueryString()->links() }}
+        </div>
+    @endif
+
+</div>
+@endsection

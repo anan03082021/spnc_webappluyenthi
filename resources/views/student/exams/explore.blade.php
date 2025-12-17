@@ -41,11 +41,24 @@
 
         .pop-badge { position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.95); color: #333; font-weight: 800; font-size: 0.7rem; padding: 5px 12px; border-radius: 20px; box-shadow: 0 5px 10px rgba(0,0,0,0.1); text-transform: uppercase; }
         
+        /* Badge Đã làm (Mới thêm) */
+        .badge-done {
+            position: absolute; top: 45px; left: 15px; /* Nằm dưới badge độ khó */
+            background: #10b981; color: white;
+            padding: 4px 10px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
         .pop-body { padding: 25px; }
         .pop-title { font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-bottom: 8px; line-height: 1.4; height: 3rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .pop-meta { display: flex; gap: 15px; font-size: 0.85rem; color: #94a3b8; font-weight: 600; margin-bottom: 20px; }
+        
         .pop-btn { width: 100%; padding: 12px; border-radius: 15px; border: none; font-weight: 800; background: #f1f5f9; color: #64748b; transition: 0.3s; }
         .exam-card-wrapper:hover .pop-btn { background: #667eea; color: white; box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+
+        /* Style riêng cho nút Làm lại */
+        .pop-btn.btn-redo { background: #d1fae5 !important; color: #059669 !important; }
+        .exam-card-wrapper:hover .pop-btn.btn-redo { background: #059669 !important; color: white !important; box-shadow: 0 5px 15px rgba(5, 150, 105, 0.4); }
 
         /* Gradients */
         .bg-grad-1 { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
@@ -53,7 +66,7 @@
         .bg-grad-3 { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
         .bg-grad-4 { background: linear-gradient(135deg, #fccb90 0%, #d57eeb 100%); }
 
-        /* NÚT BOOKMARK (Style Explore) */
+        /* NÚT BOOKMARK */
         .btn-bookmark {
             position: absolute; top: 15px; right: 15px; z-index: 10;
             width: 35px; height: 35px; border-radius: 50%; border: none;
@@ -70,7 +83,7 @@
 
 @section('content')
     
-</div> <div class="search-hero" data-aos="fade-down">
+    <div class="search-hero" data-aos="fade-down">
         <div class="container">
             <h2 class="fw-bold mb-2">Kho tàng kiến thức</h2>
             <p class="opacity-75 mb-4">Tìm kiếm hàng trăm đề thi để nâng cao trình độ.</p>
@@ -81,65 +94,85 @@
             <div class="filter-container">
                 <a href="{{ route('student.exams.explore') }}" class="filter-pill {{ !request('category') ? 'active' : '' }}">Tất cả</a>
                 @foreach($categories as $cat)
-                    <a href="#" class="filter-pill">{{ $cat->name }}</a>
+                    <a href="{{ route('student.exams.explore', ['category' => $cat->id]) }}" class="filter-pill {{ request('category') == $cat->id ? 'active' : '' }}">{{ $cat->name }}</a>
                 @endforeach
             </div>
         </div>
     </div>
-<div class="container"> <div class="stats-bar" data-aos="fade-up">
-        <h5 class="fw-bold m-0 text-dark"><i class="fa-solid fa-layer-group me-2 text-primary"></i> Danh sách đề thi</h5>
-        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">{{ $exams->total() }} kết quả</span>
-    </div>
 
-    <div class="row g-4 pb-5">
-        @forelse($exams as $index => $exam)
-            @php
-                $bgClass = 'bg-grad-' . (($index % 4) + 1);
-                $iconClass = match($index % 4) { 0 => 'fa-file-code', 1 => 'fa-database', 2 => 'fa-microchip', 3 => 'fa-globe', default => 'fa-file' };
-                $isSaved = Auth::user()->bookmarks->contains($exam->id);
-            @endphp
+    <div class="container">
+        <div class="stats-bar" data-aos="fade-up">
+            <h5 class="fw-bold m-0 text-dark"><i class="fa-solid fa-layer-group me-2 text-primary"></i> Danh sách đề thi</h5>
+            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">{{ $exams->total() }} kết quả</span>
+        </div>
 
-            <div class="col-md-3 col-sm-6" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 100 }}">
-                <div class="exam-card-wrapper">
+        <div class="row g-4 pb-5">
+            @forelse($exams as $index => $exam)
+                @php
+                    $bgClass = 'bg-grad-' . (($index % 4) + 1);
+                    $iconClass = match($index % 4) { 0 => 'fa-file-code', 1 => 'fa-database', 2 => 'fa-microchip', 3 => 'fa-globe', default => 'fa-file' };
                     
-                    <form action="{{ route('student.exams.bookmark', $exam->id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn-bookmark {{ $isSaved ? 'bm-active' : 'bm-inactive' }}" title="{{ $isSaved ? 'Bỏ lưu' : 'Lưu đề này' }}">
-                            <i class="fa-solid fa-bookmark"></i>
-                        </button>
-                    </form>
+                    // Check bookmark
+                    $isSaved = Auth::user()->bookmarks ? Auth::user()->bookmarks->contains($exam->id) : false;
 
-                    <a href="{{ route('student.exams.show', $exam->id) }}" class="exam-card-pop">
-                        <div class="pop-thumb {{ $bgClass }}">
-                            <span class="pop-badge">{{ $exam->difficulty }}</span>
-                            <i class="fa-solid {{ $iconClass }} pop-icon"></i>
-                        </div>
-                        <div class="pop-body">
-                            <h6 class="pop-title" title="{{ $exam->title }}">{{ $exam->title }}</h6>
-                            <div class="pop-meta">
-                                <span><i class="fa-regular fa-clock"></i> {{ $exam->duration }}p</span>
-                                <span><i class="fa-solid fa-list-ol"></i> {{ $exam->total_questions }} câu</span>
+                    // Check đã làm (Dựa trên mảng ID từ Controller)
+                    $isAttempted = in_array($exam->id, $attemptedExamIds ?? []);
+                @endphp
+
+                <div class="col-md-3 col-sm-6" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 100 }}">
+                    <div class="exam-card-wrapper">
+                        
+                        <form action="{{ route('student.exams.bookmark', $exam->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn-bookmark {{ $isSaved ? 'bm-active' : 'bm-inactive' }}" title="{{ $isSaved ? 'Bỏ lưu' : 'Lưu đề này' }}">
+                                <i class="fa-solid fa-bookmark"></i>
+                            </button>
+                        </form>
+
+                        <a href="{{ route('student.exams.show', $exam->id) }}" class="exam-card-pop">
+                            <div class="pop-thumb {{ $bgClass }}">
+                                <span class="pop-badge">{{ $exam->difficulty }}</span>
+                                
+                                {{-- HIỂN THỊ BADGE ĐÃ LÀM --}}
+                                @if($isAttempted)
+                                    <span class="badge-done"><i class="fa-solid fa-check"></i> Đã làm</span>
+                                @endif
+
+                                <i class="fa-solid {{ $iconClass }} pop-icon"></i>
                             </div>
-                            <div class="d-flex align-items-center mb-3">
-                                <img src="https://ui-avatars.com/api/?name={{ $exam->creator->name ?? 'T' }}&background=random" class="rounded-circle me-2" width="25" height="25">
-                                <small class="text-muted fw-bold" style="font-size: 0.75rem;">{{ $exam->creator->name ?? 'Giáo viên' }}</small>
+                            <div class="pop-body">
+                                <h6 class="pop-title" title="{{ $exam->title }}">{{ $exam->title }}</h6>
+                                <div class="pop-meta">
+                                    <span><i class="fa-regular fa-clock"></i> {{ $exam->duration }}p</span>
+                                    <span><i class="fa-solid fa-list-ol"></i> {{ $exam->total_questions }} câu</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="https://ui-avatars.com/api/?name={{ $exam->creator->name ?? 'T' }}&background=random" class="rounded-circle me-2" width="25" height="25">
+                                    <small class="text-muted fw-bold" style="font-size: 0.75rem;">{{ $exam->creator->name ?? 'Giáo viên' }}</small>
+                                </div>
+                                
+                                {{-- ĐỔI NÚT DỰA TRÊN TRẠNG THÁI --}}
+                                @if($isAttempted)
+                                    <button class="pop-btn btn-redo"><i class="fa-solid fa-rotate-right me-1"></i> Làm lại</button>
+                                @else
+                                    <button class="pop-btn">Làm bài ngay</button>
+                                @endif
                             </div>
-                            <button class="pop-btn">Làm bài ngay</button>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 </div>
-            </div>
-        @empty
-            <div class="col-12 text-center py-5">
-                <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-search-results-2511443-2103512.png" width="200" style="opacity: 0.8">
-                <h5 class="mt-4 text-muted fw-bold">Không tìm thấy đề thi phù hợp.</h5>
-                <a href="{{ route('student.exams.explore') }}" class="btn btn-link fw-bold">Xóa bộ lọc</a>
-            </div>
-        @endforelse
-    </div>
+            @empty
+                <div class="col-12 text-center py-5">
+                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-search-results-2511443-2103512.png" width="200" style="opacity: 0.8">
+                    <h5 class="mt-4 text-muted fw-bold">Không tìm thấy đề thi phù hợp.</h5>
+                    <a href="{{ route('student.exams.explore') }}" class="btn btn-link fw-bold">Xóa bộ lọc</a>
+                </div>
+            @endforelse
+        </div>
 
-    <div class="d-flex justify-content-center mt-2 mb-5">
-        {{ $exams->appends(request()->query())->links() }}
+        <div class="d-flex justify-content-center mt-2 mb-5">
+            {{ $exams->appends(request()->query())->links() }}
+        </div>
     </div>
 
 @endsection

@@ -2,21 +2,35 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Result extends Model
 {
-    protected $fillable = ['user_id', 'exam_id', 'score', 'completion_time', 'selected_answers', 'submitted_at'];
+    use HasFactory;
 
-protected $casts = [
-    'selected_answers' => 'array', // Tự động chuyển JSON sang mảng khi lấy dữ liệu
-];
+    protected $fillable = [
+        'user_id', 
+        'exam_id', 
+        'score', 
+        'completion_time', 
+        'student_answers',  // Cột mới
+        'selected_answers', // Cột cũ
+        'submitted_at'
+    ];
 
-public function exam() {
-    return $this->belongsTo(Exam::class);
-}
+    protected $casts = [
+        'student_answers' => 'array',
+        'selected_answers' => 'array', // Cast cả 2 cột sang mảng
+        'submitted_at' => 'datetime',
+        'score' => 'float',
+    ];
 
-public function user() {
-    return $this->belongsTo(User::class);
-}
+    public function exam() {
+        return $this->belongsTo(Exam::class);
+    }
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }

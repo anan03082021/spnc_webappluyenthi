@@ -9,14 +9,30 @@ class Document extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'title', 'file_path', 'file_type', 'file_size'];
+    // 1. Thêm 'category_id' vào đây để cho phép lưu dữ liệu
+    protected $fillable = [
+        'user_id', 
+        'category_id', // <--- Bổ sung cột này
+        'title', 
+        'file_path', 
+        'file_type', 
+        'file_size'
+    ];
 
+    // 2. Quan hệ với User (Người đăng) - Chỉ giữ 1 hàm duy nhất
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
+    // 3. Quan hệ với Category (Danh mục) - Để sửa lỗi RelationNotFound
+    public function category()
+    {
+        // Trả về quan hệ, nếu category_id null thì trả về null
+        return $this->belongsTo(Category::class);
+    }
     
-    // Hàm tiện ích để lấy Icon dựa trên đuôi file
+    // 4. Hàm tiện ích lấy Icon
     public function getIconAttribute()
     {
         $icons = [

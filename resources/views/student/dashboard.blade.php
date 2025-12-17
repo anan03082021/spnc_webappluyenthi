@@ -9,7 +9,7 @@
         /* --- DASHBOARD PROFESSIONAL STYLES --- */
         body { background-color: #f8fafc; }
 
-        /* 1. WELCOME BANNER (Glassmorphism + Gradient) */
+        /* 1. WELCOME BANNER */
         .welcome-card {
             background: linear-gradient(135deg, var(--primary-color) 0%, #3b82f6 100%);
             border-radius: 24px; padding: 40px; color: white; margin-bottom: 40px;
@@ -17,7 +17,6 @@
             box-shadow: 0 10px 30px -10px rgba(5, 150, 105, 0.4);
             border: 1px solid rgba(255,255,255,0.1);
         }
-        /* Decorative Circles */
         .welcome-card::before, .welcome-card::after {
             content: ''; position: absolute; border-radius: 50%;
             background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
@@ -47,7 +46,7 @@
         }
         .link-more:hover { color: var(--secondary-color); }
 
-        /* 3. EXAM CARD PRO (Consistent with Explore Page) */
+        /* 3. EXAM CARD PRO */
         .exam-card-wrapper { position: relative; height: 100%; transition: 0.3s; }
         .exam-card-wrapper:hover { transform: translateY(-5px); }
 
@@ -58,11 +57,10 @@
         .card-cover {
             height: 120px; position: relative; display: flex; align-items: center; justify-content: center;
         }
-        /* Dynamic Gradients */
-        .grad-1 { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); } /* Green */
-        .grad-2 { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); } /* Blue */
-        .grad-3 { background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%); } /* Orange */
-        .grad-4 { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); } /* Purple */
+        .grad-1 { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
+        .grad-2 { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); }
+        .grad-3 { background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%); }
+        .grad-4 { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); }
 
         .card-icon { font-size: 3rem; color: white; opacity: 0.6; mix-blend-mode: overlay; transition: 0.5s; }
         .exam-card-wrapper:hover .card-icon { transform: scale(1.1) rotate(-10deg); opacity: 0.9; }
@@ -72,15 +70,32 @@
             padding: 4px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: #334155;
         }
+        
+        /* Badge Đã làm */
+        .badge-done {
+            position: absolute; top: 10px; left: 50px; /* Cách nút bookmark */
+            background: #10b981; color: white;
+            padding: 4px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
 
         .card-body { padding: 20px; }
         .exam-title { font-weight: 800; font-size: 1rem; color: #1e293b; margin-bottom: 10px; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .exam-meta { font-size: 0.8rem; color: #64748b; font-weight: 600; display: flex; gap: 15px; margin-bottom: 15px; }
+        
         .btn-action {
             width: 100%; padding: 10px; border-radius: 12px; font-weight: 700; border: none; font-size: 0.9rem;
             background: #f8fafc; color: #64748b; transition: 0.3s;
         }
         .exam-card-wrapper:hover .btn-action { background: var(--primary-color); color: white; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3); }
+
+        /* Style riêng cho nút Làm lại */
+        .btn-redo {
+            background: #d1fae5 !important; color: #059669 !important;
+        }
+        .exam-card-wrapper:hover .btn-redo {
+            background: #059669 !important; color: white !important;
+        }
 
         /* Bookmark Button */
         .btn-bookmark {
@@ -99,7 +114,6 @@
         }
         .widget-title { font-weight: 800; font-size: 1rem; color: #334155; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* List Item Style */
         .list-item {
             display: flex; align-items: center; padding: 12px; border-radius: 12px;
             transition: 0.2s; text-decoration: none; color: inherit; border: 1px solid transparent; margin-bottom: 8px;
@@ -151,8 +165,12 @@
                     @php
                         $gradClass = 'grad-' . (($index % 4) + 1);
                         $iconClass = match($index % 4) { 0 => 'fa-code', 1 => 'fa-database', 2 => 'fa-network-wired', default => 'fa-file-signature' };
-                        // Safe check for bookmarks
+                        
+                        // Check bookmarks
                         $isSaved = Auth::user()->bookmarks ? Auth::user()->bookmarks->contains($exam->id) : false;
+
+                        // Check đã làm hay chưa (Sử dụng mảng ID từ Controller)
+                        $isAttempted = in_array($exam->id, $attemptedExamIds ?? []);
                     @endphp
 
                     <div class="col-md-6 col-xl-4" data-aos="fade-up" data-aos-delay="{{ $index * 100 }}">
@@ -168,6 +186,11 @@
                                 <div class="card-cover {{ $gradClass }}">
                                     <i class="fa-solid {{ $iconClass }} card-icon"></i>
                                     <span class="badge-diff">{{ $exam->difficulty }}</span>
+                                    
+                                    {{-- HIỂN THỊ BADGE ĐÃ LÀM --}}
+                                    @if($isAttempted)
+                                        <span class="badge-done"><i class="fa-solid fa-check"></i> Đã làm</span>
+                                    @endif
                                 </div>
                                 <div class="card-body">
                                     <h6 class="exam-title" title="{{ $exam->title }}">{{ $exam->title }}</h6>
@@ -175,7 +198,15 @@
                                         <span><i class="fa-regular fa-clock me-1"></i> {{ $exam->duration }}'</span>
                                         <span><i class="fa-solid fa-list-ol me-1"></i> {{ $exam->total_questions }} câu</span>
                                     </div>
-                                    <button class="btn-action">Làm bài ngay</button>
+                                    
+                                    {{-- ĐỔI NÚT DỰA TRÊN TRẠNG THÁI --}}
+                                    @if($isAttempted)
+                                        <button class="btn-action btn-redo">
+                                            <i class="fa-solid fa-rotate-right me-1"></i> Làm lại
+                                        </button>
+                                    @else
+                                        <button class="btn-action">Làm bài ngay</button>
+                                    @endif
                                 </div>
                             </a>
                         </div>
@@ -243,6 +274,7 @@
         </div>
     </div>
 
+    {{-- MODAL TIẾN ĐỘ --}}
     <div class="modal fade" id="progressModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4">
@@ -289,24 +321,24 @@
         const chartLabels = {!! json_encode($chartLabels ?? []) !!};
         const chartScores = {!! json_encode($chartScores ?? []) !!};
 
-        // 1. Doughnut Chart (Avocado Theme)
+        // 1. Doughnut Chart
         new Chart(document.getElementById('progressChart').getContext('2d'), {
             type: 'doughnut',
             data: { 
                 labels: ['Đã làm', 'Chưa làm'], 
                 datasets: [{ 
                     data: [doneCount, pendingCount], 
-                    backgroundColor: ['#10b981', '#f1f5f9'], // Emerald vs Light Gray
+                    backgroundColor: ['#10b981', '#f1f5f9'], 
                     borderWidth: 0 
                 }] 
             },
             options: { responsive: true, cutout: '75%', plugins: { legend: { display: false } } }
         });
 
-        // 2. Line Chart (Avocado Gradient)
+        // 2. Line Chart
         const ctxScore = document.getElementById('scoreChart').getContext('2d');
         let gradient = ctxScore.createLinearGradient(0, 0, 0, 200);
-        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // Green low opacity
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
         gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
 
         new Chart(ctxScore, {
@@ -315,7 +347,7 @@
                 labels: chartLabels,
                 datasets: [{
                     label: 'Điểm', data: chartScores, 
-                    borderColor: '#10b981', // Emerald Color
+                    borderColor: '#10b981', 
                     backgroundColor: gradient, 
                     fill: true, tension: 0.4, pointRadius: 5,
                     pointBackgroundColor: '#fff', pointBorderColor: '#10b981'
@@ -328,7 +360,7 @@
                     y: { beginAtZero: true, max: 10, grid: { borderDash: [5, 5] } }, 
                     x: { display: false } 
                 } 
-            }
+            } 
         });
     </script>
 @endpush
